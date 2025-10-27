@@ -23,6 +23,7 @@ const Chat = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -34,8 +35,21 @@ const Chat = () => {
   useEffect(() => {
     if (user) {
       loadMessages();
+      loadProfile();
     }
   }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+    
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    setProfile(data);
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -97,37 +111,56 @@ const Chat = () => {
     };
     setMessages(prev => [...prev, tempUserMsg]);
 
-    // Simulate AI response (in production, this would call your AI service)
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const aiResponse = `Thank you for your question about "${userMessage.slice(0, 30)}...". Based on your skin profile, I recommend consulting with a dermatologist for personalized advice. In the meantime, maintaining a consistent skincare routine with gentle products is always beneficial.`;
+    try {
+      // Call AI edge function
+      const { data, error: functionError } = await supabase.functions.invoke('ai-chat', {
+        body: { 
+          message: userMessage,
+          userProfile: profile
+        }
+      });
 
-    const tempAiMsg: Message = {
-      id: 'temp-ai-' + Date.now(),
-      role: 'assistant',
-      content: aiResponse,
-      created_at: new Date().toISOString()
-    };
-    setMessages(prev => [...prev, tempAiMsg]);
+      if (functionError) throw functionError;
 
-    // Save to database
-    const { error } = await supabase.from('chat_messages').insert([
-      {
-        user_id: user.id,
-        message: userMessage,
-        ai_response: aiResponse
+      const aiResponse = data?.response || "I apologize, but I couldn't generate a response. Please try again.";
+
+      const tempAiMsg: Message = {
+        id: 'temp-ai-' + Date.now(),
+        role: 'assistant',
+        content: aiResponse,
+        created_at: new Date().toISOString()
+      };
+      setMessages(prev => [...prev, tempAiMsg]);
+
+      // Save to database
+      const { error: dbError } = await supabase.from('chat_messages').insert([
+        {
+          user_id: user.id,
+          message: userMessage,
+          ai_response: aiResponse
+        }
+      ]);
+
+      if (dbError) {
+        console.error('Error saving message:', dbError);
+        toast({
+          title: "Warning",
+          description: "Message sent but not saved to history.",
+          variant: "destructive"
+        });
       }
-    ]);
-
-    if (error) {
+    } catch (error) {
+      console.error('Chat error:', error);
       toast({
         title: "Error",
-        description: "Failed to save message. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
         variant: "destructive"
       });
+      // Remove the user message from UI on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempUserMsg.id));
+    } finally {
+      setSending(false);
     }
-
-    setSending(false);
   };
 
   if (loading || !user) {
