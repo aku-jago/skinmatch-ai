@@ -11,6 +11,10 @@ import Dashboard from "./pages/Dashboard";
 import SkinScan from "./pages/SkinScan";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
+import Shop from "./pages/Shop";
+import Routine from "./pages/Routine";
+import PhotoJournal from "./pages/PhotoJournal";
+import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/scan" element={<SkinScan />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/routine" element={<Routine />} />
+            <Route path="/progress" element={<PhotoJournal />} />
+            <Route path="/settings" element={<AccountSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

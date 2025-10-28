@@ -46,6 +46,119 @@ export type Database = {
           },
         ]
       }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          status: string
+          total_price: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity?: number
+          status?: string
+          total_price: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          status?: string
+          total_price?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      photo_journals: {
+        Row: {
+          analysis_result: Json | null
+          comparison_summary: string | null
+          created_at: string
+          id: string
+          image_url: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          comparison_summary?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          comparison_summary?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          benefits: string | null
+          brand: string
+          category: string
+          concerns: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          ingredients: string | null
+          name: string
+          price: number
+          rating: number | null
+          skin_types: string[] | null
+        }
+        Insert: {
+          benefits?: string | null
+          brand: string
+          category: string
+          concerns?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          name: string
+          price: number
+          rating?: number | null
+          skin_types?: string[] | null
+        }
+        Update: {
+          benefits?: string | null
+          brand?: string
+          category?: string
+          concerns?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          ingredients?: string | null
+          name?: string
+          price?: number
+          rating?: number | null
+          skin_types?: string[] | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birthdate: string | null
@@ -122,6 +235,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      skincare_routines: {
+        Row: {
+          created_at: string
+          id: string
+          products: Json
+          progress: number | null
+          reminder_time: string | null
+          routine_name: string
+          time_of_day: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          products?: Json
+          progress?: number | null
+          reminder_time?: string | null
+          routine_name: string
+          time_of_day: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          products?: Json
+          progress?: number | null
+          reminder_time?: string | null
+          routine_name?: string
+          time_of_day?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {

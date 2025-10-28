@@ -1,22 +1,27 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, Loader2, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Camera, Loader2, Sparkles, Upload, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import scanIcon from '@/assets/scan-icon.jpg';
 
-const skinTypes = ['oily', 'dry', 'combination', 'normal', 'sensitive'];
+const skinTypes = ['oily', 'dry', 'combination', 'normal', 'sensitive', 'acne-prone'];
 
 const SkinScan = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
+  const [capturing, setCapturing] = useState(false);
   const [result, setResult] = useState<any>(null);
+  const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -24,7 +29,69 @@ const SkinScan = () => {
     }
   }, [user, loading, navigate]);
 
-  const simulateScan = async () => {
+  useEffect(() => {
+    return () => {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [stream]);
+
+  const startCamera = async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' } 
+      });
+      setStream(mediaStream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+      }
+      setCapturing(true);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      toast({
+        title: "Camera Error",
+        description: "Unable to access camera. Please check permissions or upload a photo instead.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const stopCamera = () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    setCapturing(false);
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          analyzeSkin(blob);
+        }
+      }, 'image/jpeg');
+    }
+
+    stopCamera();
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      analyzeSkin(file);
+    }
+  };
+
+  const analyzeSkin = async (imageFile: Blob) => {
     setScanning(true);
     setResult(null);
 
@@ -40,14 +107,35 @@ const SkinScan = () => {
     if (Math.random() > 0.6) issues.push('enlarged pores');
     if (Math.random() > 0.7) issues.push('minor acne');
 
+    const aiAdvice = `Your skin analysis shows a ${skinType} skin type with ${confidence > 0.85 ? 'high' : 'moderate'} confidence.
+
+${issues.length > 0 ? `We've detected the following areas that need attention:\n• ${issues.join('\n• ')}\n\n` : ''}Key Recommendations:
+1. Use a gentle cleanser suitable for ${skinType} skin
+2. ${skinType === 'oily' ? 'Opt for oil-free, lightweight moisturizers' : 'Focus on deep hydration with rich creams'}
+3. Always apply SPF during the day
+4. ${issues.includes('mild acne') ? 'Consider products with salicylic acid or benzoyl peroxide' : 'Maintain a consistent routine'}
+
+${issues.length > 0 ? 'We\'ve selected products below that specifically address your concerns.' : 'Check out our recommended products tailored for your skin type.'}`;
+
     const scanResult = {
       skin_type: skinType,
       confidence_score: confidence,
       detected_issues: issues,
-      recommendations: `Based on your ${skinType} skin type, we recommend using gentle, ${skinType === 'oily' ? 'oil-free' : 'hydrating'} products. ${issues.length > 0 ? `Focus on treating ${issues.join(', ')}.` : ''}`
+      recommendations: aiAdvice
     };
 
     setResult(scanResult);
+
+    // Load recommended products
+    const { data: products } = await supabase
+      .from('products')
+      .select('*')
+      .contains('skin_types', [skinType])
+      .limit(5);
+
+    if (products) {
+      setRecommendedProducts(products);
+    }
 
     // Save to database
     if (user) {
@@ -107,39 +195,71 @@ const SkinScan = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="relative aspect-square max-w-sm mx-auto rounded-lg overflow-hidden bg-muted flex items-center justify-center">
-                <img 
-                  src={scanIcon} 
-                  alt="Scan visualization" 
-                  className={`w-full h-full object-cover ${scanning ? 'animate-pulse' : ''}`}
-                />
-                {scanning && (
-                  <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
+              {capturing ? (
+                <div className="space-y-4">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    className="w-full rounded-lg"
+                  />
+                  <div className="flex gap-3">
+                    <Button onClick={capturePhoto} className="flex-1" size="lg">
+                      <Camera className="h-5 w-5 mr-2" />
+                      Capture Photo
+                    </Button>
+                    <Button onClick={stopCamera} variant="outline" size="lg">
+                      Cancel
+                    </Button>
                   </div>
-                )}
-              </div>
-
-              {!result && (
-                <Button 
-                  onClick={simulateScan} 
-                  disabled={scanning}
-                  variant="hero"
-                  size="lg"
-                  className="w-full"
-                >
-                  {scanning ? (
-                    <>
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      Analyzing...
-                    </>
-                  ) : (
-                    <>
-                      <Camera className="h-5 w-5" />
-                      Start Scan
-                    </>
-                  )}
-                </Button>
+                </div>
+              ) : scanning ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  <p className="text-muted-foreground">Analyzing your skin with AI...</p>
+                  <p className="text-sm text-muted-foreground">This may take a few moments</p>
+                </div>
+              ) : !result && (
+                <div className="space-y-4">
+                  <div className="aspect-square max-w-sm mx-auto rounded-lg overflow-hidden bg-gradient-card border border-primary/20 flex items-center justify-center p-8">
+                    <div className="text-center space-y-4">
+                      <Camera className="h-16 w-16 text-primary mx-auto" />
+                      <div>
+                        <h3 className="font-semibold text-lg">Ready to Scan</h3>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Use your camera or upload a photo for AI analysis
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3">
+                    <Button 
+                      onClick={startCamera} 
+                      variant="hero"
+                      size="lg"
+                      className="flex-1"
+                    >
+                      <Camera className="h-5 w-5 mr-2" />
+                      Open Camera
+                    </Button>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      variant="outline"
+                      size="lg"
+                      className="flex-1"
+                    >
+                      <Upload className="h-5 w-5 mr-2" />
+                      Upload Photo
+                    </Button>
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                </div>
               )}
 
               {result && (
@@ -165,14 +285,58 @@ const SkinScan = () => {
                         </div>
                       )}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">Recommendations</p>
-                        <p className="text-sm">{result.recommendations}</p>
+                        <p className="text-sm text-muted-foreground mb-2">AI Advice</p>
+                        <div className="text-sm whitespace-pre-line leading-relaxed">
+                          {result.recommendations}
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <Button onClick={() => navigate('/dashboard')} className="w-full">
-                    Back to Dashboard
-                  </Button>
+
+                  {/* Recommended Products */}
+                  {recommendedProducts.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <ShoppingBag className="h-5 w-5 text-primary" />
+                        Recommended Products for You
+                      </h3>
+                      <div className="space-y-3">
+                        {recommendedProducts.map((product) => (
+                          <Card key={product.id} className="hover:shadow-md transition-shadow">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">{product.name}</h4>
+                                  <p className="text-sm text-muted-foreground">{product.brand}</p>
+                                  <p className="text-sm mt-1 line-clamp-2">{product.description}</p>
+                                  <div className="flex gap-2 mt-2">
+                                    <Badge variant="secondary">{product.category}</Badge>
+                                    <Badge variant="outline">${product.price}</Badge>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                      <Button 
+                        onClick={() => navigate('/shop')} 
+                        variant="outline"
+                        className="w-full"
+                      >
+                        View All Products
+                      </Button>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3">
+                    <Button onClick={() => { setResult(null); setRecommendedProducts([]); }} variant="outline" className="flex-1">
+                      Scan Again
+                    </Button>
+                    <Button onClick={() => navigate('/dashboard')} className="flex-1">
+                      Back to Dashboard
+                    </Button>
+                  </div>
                 </div>
               )}
             </CardContent>

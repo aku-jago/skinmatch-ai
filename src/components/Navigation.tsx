@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sparkles, User, LogOut, ScanFace, MessageSquare, Home } from 'lucide-react';
+import { Sparkles, User, LogOut, Camera, MessageSquare, Home, ShoppingBag, Calendar, TrendingUp, Settings } from 'lucide-react';
 
 export const Navigation = () => {
   const { user, signOut } = useAuth();
@@ -19,14 +19,14 @@ export const Navigation = () => {
           </span>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           {user ? (
             <>
               <Link to="/dashboard">
                 <Button 
                   variant={isActive('/dashboard') ? 'default' : 'ghost'} 
                   size="sm"
-                  className="gap-2"
+                  className="gap-1"
                 >
                   <Home className="h-4 w-4" />
                   Dashboard
@@ -36,20 +36,58 @@ export const Navigation = () => {
                 <Button 
                   variant={isActive('/scan') ? 'default' : 'ghost'} 
                   size="sm"
-                  className="gap-2"
+                  className="gap-1"
                 >
-                  <ScanFace className="h-4 w-4" />
+                  <Camera className="h-4 w-4" />
                   Scan
+                </Button>
+              </Link>
+              <Link to="/shop">
+                <Button 
+                  variant={isActive('/shop') ? 'default' : 'ghost'} 
+                  size="sm"
+                  className="gap-1"
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                  Shop
+                </Button>
+              </Link>
+              <Link to="/routine">
+                <Button 
+                  variant={isActive('/routine') ? 'default' : 'ghost'} 
+                  size="sm"
+                  className="gap-1"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Routine
+                </Button>
+              </Link>
+              <Link to="/progress">
+                <Button 
+                  variant={isActive('/progress') ? 'default' : 'ghost'} 
+                  size="sm"
+                  className="gap-1"
+                >
+                  <TrendingUp className="h-4 w-4" />
+                  Progress
                 </Button>
               </Link>
               <Link to="/chat">
                 <Button 
                   variant={isActive('/chat') ? 'default' : 'ghost'} 
                   size="sm"
-                  className="gap-2"
+                  className="gap-1"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Chat
+                </Button>
+              </Link>
+              <Link to="/settings">
+                <Button 
+                  variant={isActive('/settings') ? 'default' : 'ghost'} 
+                  size="icon"
+                >
+                  <Settings className="h-4 w-4" />
                 </Button>
               </Link>
               <Link to="/profile">
