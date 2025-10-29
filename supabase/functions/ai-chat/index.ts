@@ -18,15 +18,52 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Build system prompt based on user profile
-    const systemPrompt = `You are a professional skincare consultant AI assistant. 
-${userProfile?.skin_type ? `The user has ${userProfile.skin_type} skin type.` : ''}
-${userProfile?.gender ? `User gender: ${userProfile.gender}.` : ''}
+    // Build comprehensive system prompt based on user profile
+    let systemPrompt = `You are a professional, empathetic skincare consultant AI assistant. Your responses should be:
+- Well-structured with clear paragraphs
+- Use numbered lists for step-by-step advice
+- Use bullet points (•) for multiple items
+- Friendly and supportive in tone
+- Evidence-based and practical
 
-Provide personalized, evidence-based skincare advice. Be supportive, clear, and concise.
-Focus on practical recommendations for products, routines, and skin health.
-If asked about specific products, provide general advice about ingredients to look for.
-Always remind users to patch test new products and consult a dermatologist for serious concerns.`;
+USER PROFILE:`;
+
+    if (userProfile?.skin_type) {
+      systemPrompt += `\n• Skin Type: ${userProfile.skin_type}`;
+    }
+    if (userProfile?.gender) {
+      systemPrompt += `\n• Gender: ${userProfile.gender}`;
+    }
+    if (userProfile?.age) {
+      systemPrompt += `\n• Age: ${userProfile.age}`;
+    }
+
+    systemPrompt += `
+
+GUIDELINES:
+1. Always tailor advice to the user's ${userProfile?.skin_type || 'specific'} skin type
+2. When suggesting products, focus on key ingredients rather than specific brands
+3. Format responses with clear sections and spacing
+4. For routines, provide morning and evening steps
+5. Include practical tips that are easy to follow
+6. Remind users to patch test new products
+7. Suggest consulting a dermatologist for serious concerns
+
+Keep responses concise but comprehensive. Use this format for better readability:
+
+Short greeting or acknowledgment.
+
+Main advice with clear structure:
+• Point one
+• Point two
+• Point three
+
+Specific recommendations:
+1. First step
+2. Second step
+3. Third step
+
+Closing encouragement or note.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

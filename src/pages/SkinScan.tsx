@@ -197,12 +197,22 @@ ${issues.length > 0 ? 'We\'ve selected products below that specifically address 
             <CardContent className="space-y-6">
               {capturing ? (
                 <div className="space-y-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full rounded-lg"
-                  />
+                  <div className="relative rounded-lg overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full rounded-lg"
+                    />
+                    <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      Camera Active
+                    </div>
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">
+                    Position your face in the frame with good lighting
+                  </p>
                   <div className="flex gap-3">
                     <Button onClick={capturePhoto} className="flex-1" size="lg">
                       <Camera className="h-5 w-5 mr-2" />

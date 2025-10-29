@@ -208,13 +208,15 @@ const Chat = () => {
                         </div>
                       )}
                       <div
-                        className={`rounded-lg px-4 py-2 max-w-[80%] ${
+                        className={`rounded-lg px-4 py-3 max-w-[80%] ${
                           message.role === 'user'
                             ? 'bg-primary text-primary-foreground'
                             : 'bg-muted'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        <div className="text-sm whitespace-pre-line leading-relaxed prose prose-sm max-w-none dark:prose-invert">
+                          {message.content}
+                        </div>
                       </div>
                       {message.role === 'user' && (
                         <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
