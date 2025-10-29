@@ -39,21 +39,58 @@ const SkinScan = () => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia is not supported in this browser');
       }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'user' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+
+      let mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+
+      if (videoRef.current) {
+        const videoEl = videoRef.current;
+        videoEl.srcObject = mediaStream;
+
+        const playIfReady = () => {
+          videoEl.play().catch(() => {
+            // Ignore play errors; often resolved after user gesture or metadata load
+          });
+        };
+
+        if ('onloadedmetadata' in videoEl) {
+          videoEl.onloadedmetadata = playIfReady;
+        }
+        // Try to play immediately as well
+        videoEl.play().catch(() => {/* will try after metadata */});
+      }
+
       setCapturing(true);
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast({
-        title: "Camera Error",
-        description: "Unable to access camera. Please check permissions or upload a photo instead.",
-        variant: "destructive"
-      });
+    } catch (primaryError) {
+      // Retry with a more permissive constraint as fallback
+      try {
+        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        setStream(mediaStream);
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+          await videoRef.current.play().catch(() => {});
+        }
+        setCapturing(true);
+      } catch (error) {
+        console.error('Error accessing camera:', primaryError, error);
+        toast({
+          title: "Camera Error",
+          description: "Tidak dapat mengakses kamera. Pastikan izin sudah diberikan dan coba gunakan tombol Upload Photo sebagai alternatif.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
