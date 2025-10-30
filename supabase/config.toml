@@ -2,3 +2,9 @@ project_id = "auefvhcngmyipduqkhfi"
 
 [functions.ai-chat]
 verify_jwt = true
+
+[functions.analyze-skin-image]
+verify_jwt = true
+
+[functions.analyze-progress-photo]
+verify_jwt = true

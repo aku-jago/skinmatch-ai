@@ -102,7 +102,6 @@ const Chat = () => {
     setInput('');
     setSending(true);
 
-    // Add user message to UI
     const tempUserMsg: Message = {
       id: 'temp-' + Date.now(),
       role: 'user',
@@ -112,7 +111,6 @@ const Chat = () => {
     setMessages(prev => [...prev, tempUserMsg]);
 
     try {
-      // Call AI edge function
       const { data, error: functionError } = await supabase.functions.invoke('ai-chat', {
         body: { 
           message: userMessage,
@@ -122,7 +120,7 @@ const Chat = () => {
 
       if (functionError) throw functionError;
 
-      const aiResponse = data?.response || "I apologize, but I couldn't generate a response. Please try again.";
+      const aiResponse = data?.response || "Maaf, saya tidak dapat menghasilkan response. Silakan coba lagi.";
 
       const tempAiMsg: Message = {
         id: 'temp-ai-' + Date.now(),
@@ -132,7 +130,6 @@ const Chat = () => {
       };
       setMessages(prev => [...prev, tempAiMsg]);
 
-      // Save to database
       const { error: dbError } = await supabase.from('chat_messages').insert([
         {
           user_id: user.id,
@@ -143,20 +140,14 @@ const Chat = () => {
 
       if (dbError) {
         console.error('Error saving message:', dbError);
-        toast({
-          title: "Warning",
-          description: "Message sent but not saved to history.",
-          variant: "destructive"
-        });
       }
     } catch (error) {
       console.error('Chat error:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send message. Please try again.",
+        description: "Gagal mengirim pesan. Silakan coba lagi.",
         variant: "destructive"
       });
-      // Remove the user message from UI on error
       setMessages(prev => prev.filter(msg => msg.id !== tempUserMsg.id));
     } finally {
       setSending(false);
@@ -177,7 +168,7 @@ const Chat = () => {
               AI Skincare Consultant
             </h1>
             <p className="text-muted-foreground">
-              Ask me anything about skincare and get personalized advice
+              Tanyakan apapun tentang skincare dan dapatkan saran personal
             </p>
           </div>
 
@@ -193,34 +184,45 @@ const Chat = () => {
                 {messages.length === 0 ? (
                   <div className="text-center text-muted-foreground py-12">
                     <Bot className="h-12 w-12 mx-auto mb-4 text-primary/50" />
-                    <p>Start a conversation by sending a message!</p>
-                    <p className="text-sm mt-2">Try asking about your skin type or product recommendations.</p>
+                    <p>Mulai percakapan dengan mengirim pesan!</p>
+                    <p className="text-sm mt-2">Coba tanyakan tentang jenis kulit atau rekomendasi produk.</p>
                   </div>
                 ) : (
                   messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in-50 slide-in-from-bottom-2 duration-300`}
                     >
                       {message.role === 'assistant' && (
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <Bot className="h-5 w-5 text-primary" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0 shadow-soft">
+                          <Bot className="h-5 w-5 text-primary-foreground" />
                         </div>
                       )}
                       <div
-                        className={`rounded-lg px-4 py-3 max-w-[80%] ${
+                        className={`rounded-2xl px-5 py-3 max-w-[80%] shadow-sm ${
                           message.role === 'user'
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-muted'
+                            ? 'bg-gradient-to-br from-primary to-primary/90 text-primary-foreground'
+                            : 'bg-gradient-card border border-primary/10'
                         }`}
                       >
-                        <div className="text-sm whitespace-pre-line leading-relaxed prose prose-sm max-w-none dark:prose-invert">
-                          {message.content}
+                        <div className="text-sm leading-relaxed">
+                          {message.content.split('\n').map((line, idx) => {
+                            if (line.trim().startsWith('•') || line.trim().match(/^\d+\./)) {
+                              return <div key={idx} className="my-1 pl-2">{line}</div>;
+                            }
+                            if (line.trim().startsWith('#')) {
+                              return <div key={idx} className="font-semibold mt-3 mb-1">{line.replace(/^#+\s*/, '')}</div>;
+                            }
+                            if (line.trim() === '') {
+                              return <div key={idx} className="h-2" />;
+                            }
+                            return <div key={idx}>{line}</div>;
+                          })}
                         </div>
                       </div>
                       {message.role === 'user' && (
-                        <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                          <UserIcon className="h-5 w-5 text-secondary" />
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-secondary to-secondary/80 flex items-center justify-center flex-shrink-0 shadow-soft">
+                          <UserIcon className="h-5 w-5 text-secondary-foreground" />
                         </div>
                       )}
                     </div>
@@ -234,7 +236,7 @@ const Chat = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && !sending && handleSend()}
-                  placeholder="Ask about your skincare routine..."
+                  placeholder="Tanyakan tentang routine skincare Anda..."
                   disabled={sending}
                 />
                 <Button onClick={handleSend} disabled={sending || !input.trim()}>

@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanFace, MessageSquare, Sparkles, TrendingUp } from 'lucide-react';
+import { ScanFace, MessageSquare, Sparkles, TrendingUp, ShoppingBag, Calendar, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
@@ -92,44 +92,141 @@ const Dashboard = () => {
           )}
 
           {/* Quick Actions */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer" onClick={() => navigate('/scan')}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-primary/10">
-                    <ScanFace className="h-6 w-6 text-primary" />
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Fitur Utama</h2>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/scan')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-primary to-primary/80 group-hover:scale-110 transition-transform">
+                      <ScanFace className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>Skin Scan</CardTitle>
+                      <CardDescription>Analisis AI jenis kulit</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle>Skin Scan</CardTitle>
-                    <CardDescription>Analyze your skin type</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button variant="hero" className="w-full">
-                  Start Scan
-                </Button>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Dapatkan analisis mendalam tentang jenis kulit Anda dengan teknologi AI
+                  </p>
+                  <Button variant="hero" className="w-full">
+                    Mulai Scan
+                  </Button>
+                </CardContent>
+              </Card>
 
-            <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer" onClick={() => navigate('/chat')}>
-              <CardHeader>
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-lg bg-secondary/10">
-                    <MessageSquare className="h-6 w-6 text-secondary" />
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/chat')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-secondary to-secondary/80 group-hover:scale-110 transition-transform">
+                      <MessageSquare className="h-6 w-6 text-secondary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>AI Consultant</CardTitle>
+                      <CardDescription>Chat dengan AI expert</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle>AI Consultant</CardTitle>
-                    <CardDescription>Chat with our AI expert</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Konsultasi skincare personal dengan AI assistant kami
+                  </p>
+                  <Button variant="hero" className="w-full">
+                    Mulai Chat
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/progress')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-accent to-accent/80 group-hover:scale-110 transition-transform">
+                      <Camera className="h-6 w-6 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>Progress Tracker</CardTitle>
+                      <CardDescription>Track perjalanan kulit</CardDescription>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <Button variant="hero" className="w-full">
-                  Start Chat
-                </Button>
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Pantau perkembangan kulit Anda dari waktu ke waktu
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Lihat Progress
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/shop')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-primary/70 to-accent/70 group-hover:scale-110 transition-transform">
+                      <ShoppingBag className="h-6 w-6 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>Shop Products</CardTitle>
+                      <CardDescription>Produk skincare terbaik</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Temukan produk skincare yang cocok untuk kulit Anda
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Jelajahi Produk
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/routine')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-secondary/70 to-primary/70 group-hover:scale-110 transition-transform">
+                      <Calendar className="h-6 w-6 text-secondary-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>My Routine</CardTitle>
+                      <CardDescription>Routine harian Anda</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Kelola dan pantau routine skincare harian Anda
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Lihat Routine
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/profile')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-accent/70 to-secondary/70 group-hover:scale-110 transition-transform">
+                      <TrendingUp className="h-6 w-6 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>My Profile</CardTitle>
+                      <CardDescription>Profil & preferensi</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Kelola profil dan preferensi skincare Anda
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Lihat Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Tips Section */}

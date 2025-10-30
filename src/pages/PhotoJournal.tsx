@@ -62,19 +62,38 @@ const PhotoJournal = () => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'user' } 
-      });
-      setStream(mediaStream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('getUserMedia is not supported');
       }
+
+      const constraints: MediaStreamConstraints = {
+        video: {
+          facingMode: { ideal: 'user' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      setStream(mediaStream);
+      
+      if (videoRef.current) {
+        const videoEl = videoRef.current;
+        videoEl.srcObject = mediaStream;
+        
+        videoEl.onloadedmetadata = () => {
+          videoEl.play().catch(() => {});
+        };
+        videoEl.play().catch(() => {});
+      }
+      
       setCapturing(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
       toast({
         title: "Camera Error",
-        description: "Unable to access camera. Please check permissions.",
+        description: "Tidak dapat mengakses kamera. Pastikan izin sudah diberikan.",
         variant: "destructive"
       });
     }
@@ -119,50 +138,83 @@ const PhotoJournal = () => {
     
     setAnalyzing(true);
 
-    // Simulate AI analysis
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+      });
 
-    const analysisResult = {
-      skin_type: 'combination',
-      issues: ['mild redness', 'texture'],
-      improvements: journals.length > 0 ? {
-        redness: '-15%',
-        texture: '+smoother',
-        overall: 'improved'
-      } : null
-    };
+      const imageBase64 = await base64Promise;
+      const hasHistory = journals.length > 0;
 
-    const comparisonText = journals.length > 0
-      ? 'Great progress! Your skin shows 15% less redness and improved texture compared to your first scan.'
-      : 'This is your baseline photo. Keep tracking to see your progress!';
+      // Call AI edge function
+      const { data, error: functionError } = await supabase.functions.invoke('analyze-progress-photo', {
+        body: { imageBase64, hasHistory }
+      });
 
-    // In a real app, upload to storage and get URL
-    const mockImageUrl = URL.createObjectURL(imageFile);
-
-    const { error } = await supabase.from('photo_journals').insert([
-      {
-        user_id: user.id,
-        image_url: mockImageUrl,
-        analysis_result: analysisResult,
-        comparison_summary: comparisonText
+      if (functionError) {
+        throw functionError;
       }
-    ]);
 
-    if (error) {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const analysis = data.analysis;
+      const mockImageUrl = URL.createObjectURL(imageFile);
+
+      let comparisonText = '';
+      if (hasHistory) {
+        // Generate summary from improvements
+        const improvements = analysis.improvements;
+        const positiveChanges = Object.entries(improvements)
+          .filter(([_, value]: [string, any]) => value.status === 'improved')
+          .map(([key, value]: [string, any]) => `${key}: ${value.percentage}`);
+        
+        comparisonText = analysis.summary || 
+          `Progress bagus! Terdeteksi peningkatan pada: ${positiveChanges.join(', ')}. ${analysis.recommendations}`;
+      } else {
+        comparisonText = analysis.summary || 'Ini adalah foto baseline Anda. Terus tracking untuk melihat progress!';
+      }
+
+      const { error } = await supabase.from('photo_journals').insert([
+        {
+          user_id: user.id,
+          image_url: mockImageUrl,
+          analysis_result: analysis,
+          comparison_summary: comparisonText
+        }
+      ]);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: "Gagal menyimpan foto journal.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Analisis Selesai!",
+          description: "Foto Anda telah dianalisis dan disimpan.",
+        });
+        loadJournals();
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
       toast({
         title: "Error",
-        description: "Failed to save photo journal.",
+        description: error instanceof Error ? error.message : "Gagal menganalisis foto. Silakan coba lagi.",
         variant: "destructive"
       });
-    } else {
-      toast({
-        title: "Analysis Complete!",
-        description: "Your photo has been analyzed and saved.",
-      });
-      loadJournals();
+    } finally {
+      setAnalyzing(false);
     }
-
-    setAnalyzing(false);
   };
 
   if (loading || !user) {
@@ -194,26 +246,36 @@ const PhotoJournal = () => {
             <CardContent className="space-y-4">
               {capturing ? (
                 <div className="space-y-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    className="w-full rounded-lg"
-                  />
+                  <div className="relative rounded-lg overflow-hidden bg-black">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full rounded-lg"
+                    />
+                    <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      Kamera Aktif
+                    </div>
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">
+                    Posisikan wajah Anda dengan pencahayaan yang baik
+                  </p>
                   <div className="flex gap-3">
                     <Button onClick={capturePhoto} className="flex-1" size="lg">
                       <Camera className="h-5 w-5 mr-2" />
-                      Capture Photo
+                      Ambil Foto
                     </Button>
                     <Button onClick={stopCamera} variant="outline" size="lg">
-                      Cancel
+                      Batal
                     </Button>
                   </div>
                 </div>
               ) : analyzing ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                  <p className="text-muted-foreground">Analyzing your skin progress...</p>
+                  <p className="text-muted-foreground">Menganalisis progress kulit Anda...</p>
                 </div>
               ) : (
                 <div className="flex gap-3">
@@ -282,13 +344,22 @@ const PhotoJournal = () => {
                         </div>
                       )}
                       {journal.analysis_result?.improvements && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm">Improvements Detected:</h4>
-                          <div className="grid grid-cols-2 gap-2">
-                            {Object.entries(journal.analysis_result.improvements).map(([key, value]) => (
-                              <div key={key} className="text-xs">
-                                <span className="capitalize text-muted-foreground">{key}: </span>
-                                <span className="font-medium text-primary">{value as string}</span>
+                        <div className="space-y-3">
+                          <h4 className="font-semibold text-sm">Peningkatan yang Terdeteksi:</h4>
+                          <div className="space-y-2">
+                            {Object.entries(journal.analysis_result.improvements).map(([key, value]: [string, any]) => (
+                              <div key={key} className="p-2 bg-muted/50 rounded-lg">
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="capitalize text-sm font-medium">{key}</span>
+                                  <span className={`text-sm font-bold ${
+                                    value.status === 'improved' ? 'text-green-600 dark:text-green-400' : 
+                                    value.status === 'worse' ? 'text-red-600 dark:text-red-400' : 
+                                    'text-muted-foreground'
+                                  }`}>
+                                    {value.percentage}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted-foreground">{value.detail}</p>
                               </div>
                             ))}
                           </div>

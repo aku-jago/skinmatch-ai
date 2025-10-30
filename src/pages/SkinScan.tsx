@@ -19,6 +19,7 @@ const SkinScan = () => {
   const [capturing, setCapturing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -111,9 +112,12 @@ const SkinScan = () => {
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(videoRef.current, 0, 0);
+      const imageUrl = canvas.toDataURL('image/jpeg');
+      setCapturedImage(imageUrl);
+      
       canvas.toBlob((blob) => {
         if (blob) {
-          analyzeSkin(blob);
+          analyzeSkin(blob, imageUrl);
         }
       }, 'image/jpeg');
     }
@@ -124,86 +128,109 @@ const SkinScan = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      analyzeSkin(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setCapturedImage(imageUrl);
+        analyzeSkin(file, imageUrl);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const analyzeSkin = async (imageFile: Blob) => {
+  const analyzeSkin = async (imageFile: Blob, imageUrl: string) => {
     setScanning(true);
     setResult(null);
 
-    // Simulate AI processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(imageFile);
+      
+      const base64Promise = new Promise<string>((resolve) => {
+        reader.onloadend = () => {
+          const base64 = (reader.result as string).split(',')[1];
+          resolve(base64);
+        };
+      });
 
-    // Generate random result (simulation)
-    const skinType = skinTypes[Math.floor(Math.random() * skinTypes.length)];
-    const confidence = 0.75 + Math.random() * 0.2;
-    const issues = [];
-    
-    if (Math.random() > 0.5) issues.push('mild redness');
-    if (Math.random() > 0.6) issues.push('enlarged pores');
-    if (Math.random() > 0.7) issues.push('minor acne');
+      const imageBase64 = await base64Promise;
 
-    const aiAdvice = `Your skin analysis shows a ${skinType} skin type with ${confidence > 0.85 ? 'high' : 'moderate'} confidence.
+      // Call AI edge function
+      const { data, error: functionError } = await supabase.functions.invoke('analyze-skin-image', {
+        body: { imageBase64 }
+      });
 
-${issues.length > 0 ? `We've detected the following areas that need attention:\n• ${issues.join('\n• ')}\n\n` : ''}Key Recommendations:
-1. Use a gentle cleanser suitable for ${skinType} skin
-2. ${skinType === 'oily' ? 'Opt for oil-free, lightweight moisturizers' : 'Focus on deep hydration with rich creams'}
-3. Always apply SPF during the day
-4. ${issues.includes('mild acne') ? 'Consider products with salicylic acid or benzoyl peroxide' : 'Maintain a consistent routine'}
-
-${issues.length > 0 ? 'We\'ve selected products below that specifically address your concerns.' : 'Check out our recommended products tailored for your skin type.'}`;
-
-    const scanResult = {
-      skin_type: skinType,
-      confidence_score: confidence,
-      detected_issues: issues,
-      recommendations: aiAdvice
-    };
-
-    setResult(scanResult);
-
-    // Load recommended products
-    const { data: products } = await supabase
-      .from('products')
-      .select('*')
-      .contains('skin_types', [skinType])
-      .limit(5);
-
-    if (products) {
-      setRecommendedProducts(products);
-    }
-
-    // Save to database
-    if (user) {
-      const { error } = await supabase.from('skin_analyses').insert([
-        {
-          user_id: user.id,
-          ...scanResult
-        }
-      ]);
-
-      if (error) {
-        toast({
-          title: "Error",
-          description: "Failed to save analysis. Please try again.",
-          variant: "destructive"
-        });
-      } else {
-        // Update profile skin type
-        await supabase
-          .from('profiles')
-          .update({ skin_type: skinType })
-          .eq('id', user.id);
-
-        toast({
-          title: "Scan Complete!",
-          description: "Your skin analysis has been saved.",
-        });
+      if (functionError) {
+        throw functionError;
       }
-    }
 
-    setScanning(false);
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      const analysis = data.analysis;
+      
+      const scanResult = {
+        skin_type: analysis.skin_type,
+        confidence_score: analysis.confidence_score,
+        detected_issues: analysis.detected_issues,
+        recommendations: analysis.recommendations,
+        detailed_analysis: analysis.detailed_analysis,
+        image_url: imageUrl
+      };
+
+      setResult(scanResult);
+
+      // Load recommended products
+      const { data: products } = await supabase
+        .from('products')
+        .select('*')
+        .contains('skin_types', [scanResult.skin_type])
+        .limit(5);
+
+      if (products) {
+        setRecommendedProducts(products);
+      }
+
+      // Save to database
+      if (user) {
+        const { error } = await supabase.from('skin_analyses').insert([
+          {
+            user_id: user.id,
+            ...scanResult
+          }
+        ]);
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Gagal menyimpan analisis. Silakan coba lagi.",
+            variant: "destructive"
+          });
+        } else {
+          // Update profile skin type
+          await supabase
+            .from('profiles')
+            .update({ skin_type: scanResult.skin_type })
+            .eq('id', user.id);
+
+          toast({
+            title: "Analisis Selesai!",
+            description: "Analisis kulit Anda telah disimpan.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Analysis error:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Gagal menganalisis foto. Silakan coba lagi.",
+        variant: "destructive"
+      });
+    } finally {
+      setScanning(false);
+    }
   };
 
   if (loading || !user) {
@@ -262,9 +289,12 @@ ${issues.length > 0 ? 'We\'ve selected products below that specifically address 
                 </div>
               ) : scanning ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  {capturedImage && (
+                    <img src={capturedImage} alt="Captured" className="w-64 h-64 object-cover rounded-lg mb-4" />
+                  )}
                   <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                  <p className="text-muted-foreground">Analyzing your skin with AI...</p>
-                  <p className="text-sm text-muted-foreground">This may take a few moments</p>
+                  <p className="text-muted-foreground">Menganalisis kulit Anda dengan AI...</p>
+                  <p className="text-sm text-muted-foreground">Ini mungkin memakan waktu beberapa saat</p>
                 </div>
               ) : !result && (
                 <div className="space-y-4">
@@ -311,29 +341,49 @@ ${issues.length > 0 ? 'We\'ve selected products below that specifically address 
 
               {result && (
                 <div className="space-y-4 animate-in fade-in-50 duration-500">
+                  {capturedImage && (
+                    <div className="rounded-lg overflow-hidden">
+                      <img src={capturedImage} alt="Analyzed" className="w-full object-cover" />
+                    </div>
+                  )}
+                  
                   <div className="p-6 rounded-lg bg-gradient-card border border-primary/20">
                     <div className="flex items-center gap-2 mb-4">
                       <Sparkles className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-lg">Analysis Results</h3>
+                      <h3 className="font-semibold text-lg">Hasil Analisis</h3>
                     </div>
                     <div className="space-y-3">
                       <div>
-                        <p className="text-sm text-muted-foreground">Skin Type</p>
+                        <p className="text-sm text-muted-foreground">Jenis Kulit</p>
                         <p className="text-2xl font-bold capitalize text-primary">{result.skin_type}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Confidence</p>
+                        <p className="text-sm text-muted-foreground">Tingkat Keyakinan</p>
                         <p className="text-lg font-semibold">{(result.confidence_score * 100).toFixed(0)}%</p>
                       </div>
-                      {result.detected_issues.length > 0 && (
+                      {result.detected_issues && result.detected_issues.length > 0 && (
                         <div>
-                          <p className="text-sm text-muted-foreground">Detected Issues</p>
-                          <p className="text-sm capitalize">{result.detected_issues.join(', ')}</p>
+                          <p className="text-sm text-muted-foreground mb-2">Masalah yang Terdeteksi</p>
+                          <div className="flex flex-wrap gap-2">
+                            {result.detected_issues.map((issue: string, idx: number) => (
+                              <span key={idx} className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
+                                {issue}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {result.detailed_analysis && (
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-2">Analisis Detail</p>
+                          <div className="text-sm leading-relaxed p-4 bg-muted/50 rounded-lg">
+                            {result.detailed_analysis}
+                          </div>
                         </div>
                       )}
                       <div>
-                        <p className="text-sm text-muted-foreground mb-2">AI Advice</p>
-                        <div className="text-sm whitespace-pre-line leading-relaxed">
+                        <p className="text-sm text-muted-foreground mb-2">Rekomendasi AI</p>
+                        <div className="text-sm whitespace-pre-line leading-relaxed p-4 bg-primary/5 rounded-lg">
                           {result.recommendations}
                         </div>
                       </div>
@@ -377,11 +427,11 @@ ${issues.length > 0 ? 'We\'ve selected products below that specifically address 
                   )}
 
                   <div className="flex gap-3">
-                    <Button onClick={() => { setResult(null); setRecommendedProducts([]); }} variant="outline" className="flex-1">
-                      Scan Again
+                    <Button onClick={() => { setResult(null); setRecommendedProducts([]); setCapturedImage(null); }} variant="outline" className="flex-1">
+                      Scan Lagi
                     </Button>
                     <Button onClick={() => navigate('/dashboard')} className="flex-1">
-                      Back to Dashboard
+                      Kembali ke Dashboard
                     </Button>
                   </div>
                 </div>
