@@ -199,6 +199,7 @@ export type Database = {
         Row: {
           confidence_score: number | null
           created_at: string | null
+          detailed_analysis: string | null
           detected_issues: Json | null
           id: string
           image_url: string | null
@@ -209,6 +210,7 @@ export type Database = {
         Insert: {
           confidence_score?: number | null
           created_at?: string | null
+          detailed_analysis?: string | null
           detected_issues?: Json | null
           id?: string
           image_url?: string | null
@@ -219,6 +221,7 @@ export type Database = {
         Update: {
           confidence_score?: number | null
           created_at?: string | null
+          detailed_analysis?: string | null
           detected_issues?: Json | null
           id?: string
           image_url?: string | null
