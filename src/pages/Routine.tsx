@@ -120,21 +120,69 @@ const Routine = () => {
   };
 
   const handleUpdateProgress = async (id: string, currentProgress: number) => {
-    const newProgress = Math.min(currentProgress + 1, 30);
-    
-    const { error } = await supabase
-      .from('skincare_routines')
-      .update({ progress: newProgress })
-      .eq('id', id);
+    if (!user) return;
 
-    if (!error) {
+    try {
+      // Check if already completed today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const { data: existingCompletion } = await supabase
+        .from('routine_completions')
+        .select('*')
+        .eq('routine_id', id)
+        .gte('completed_at', today.toISOString())
+        .single();
+
+      if (existingCompletion) {
+        toast({
+          title: "Already Completed",
+          description: "You've already marked this routine as complete today!",
+        });
+        return;
+      }
+
+      // Add completion record
+      const { error: completionError } = await supabase
+        .from('routine_completions')
+        .insert({
+          user_id: user.id,
+          routine_id: id,
+          completed_at: new Date().toISOString(),
+        });
+
+      if (completionError) throw completionError;
+
+      // Update streak
+      const newProgress = Math.min(currentProgress + 1, 30);
+      
+      const { error: updateError } = await supabase
+        .from('skincare_routines')
+        .update({ progress: newProgress })
+        .eq('id', id);
+
+      if (updateError) throw updateError;
+
       if (newProgress === 7 || newProgress === 14 || newProgress === 30) {
         toast({
           title: "Milestone Reached! 🎉",
           description: `You've maintained your routine for ${newProgress} days!`,
         });
+      } else {
+        toast({
+          title: "Great Job! ✨",
+          description: "Routine completed for today!",
+        });
       }
+      
       loadRoutines();
+    } catch (error) {
+      console.error('Error updating progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update progress",
+        variant: "destructive",
+      });
     }
   };
 

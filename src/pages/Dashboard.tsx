@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { ScanFace, MessageSquare, Sparkles, TrendingUp, ShoppingBag, Calendar, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import SkinHealthAnalytics from '@/components/SkinHealthAnalytics';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -90,6 +91,11 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           )}
+
+          {/* Skin Health Analytics Section */}
+          <div className="mb-8">
+            <SkinHealthAnalytics userId={user.id} />
+          </div>
 
           {/* Quick Actions */}
           <div>

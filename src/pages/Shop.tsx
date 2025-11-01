@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Search, ShoppingCart, Star } from 'lucide-react';
+import { Search, ShoppingCart, Star, MessageCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -17,6 +17,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ProductReviews from '@/components/ProductReviews';
+import ProductReviewDialog from '@/components/ProductReviewDialog';
 
 interface Product {
   id: string;
@@ -44,6 +47,8 @@ const Shop = () => {
   const [concernFilter, setConcernFilter] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [userSkinType, setUserSkinType] = useState<string | null>(null);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [reviewsKey, setReviewsKey] = useState(0);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -255,84 +260,114 @@ const Shop = () => {
 
       {/* Product Detail Modal */}
       <Dialog open={!!selectedProduct} onOpenChange={() => setSelectedProduct(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedProduct && (
             <>
               <DialogHeader>
                 <DialogTitle className="text-2xl">{selectedProduct.name}</DialogTitle>
                 <DialogDescription className="text-lg">{selectedProduct.brand}</DialogDescription>
               </DialogHeader>
-              <div className="space-y-6 mt-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                    <span className="text-lg font-medium">{selectedProduct.rating?.toFixed(1)}</span>
-                  </div>
-                  <span className="text-3xl font-bold text-primary">
-                    ${selectedProduct.price.toFixed(2)}
-                  </span>
-                </div>
-
-                {isSuitableForUserSkin(selectedProduct) && (
-                  <Badge variant="secondary" className="text-sm">
-                    ✨ Suitable for your {userSkinType} skin type
-                  </Badge>
-                )}
-
-                <div>
-                  <h3 className="font-semibold mb-2">Description</h3>
-                  <p className="text-muted-foreground">{selectedProduct.description}</p>
-                </div>
-
-                {selectedProduct.ingredients && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Key Ingredients</h3>
-                    <p className="text-sm text-muted-foreground">{selectedProduct.ingredients}</p>
-                  </div>
-                )}
-
-                {selectedProduct.benefits && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Benefits</h3>
-                    <p className="text-sm text-muted-foreground">{selectedProduct.benefits}</p>
-                  </div>
-                )}
-
-                {selectedProduct.concerns && selectedProduct.concerns.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold mb-2">Addresses Concerns</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedProduct.concerns.map((concern) => (
-                        <Badge key={concern} variant="outline">
-                          {concern}
-                        </Badge>
-                      ))}
+              
+              <Tabs defaultValue="details" className="mt-4">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="details">Product Details</TabsTrigger>
+                  <TabsTrigger value="reviews">Reviews</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="details" className="space-y-6 mt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
+                      <span className="text-lg font-medium">{selectedProduct.rating?.toFixed(1)}</span>
                     </div>
+                    <span className="text-3xl font-bold text-primary">
+                      ${selectedProduct.price.toFixed(2)}
+                    </span>
                   </div>
-                )}
 
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    onClick={() => handleBuyNow(selectedProduct)}
-                    className="flex-1"
-                    size="lg"
-                  >
-                    <ShoppingCart className="h-5 w-5 mr-2" />
-                    Buy Now
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedProduct(null)}
-                    size="lg"
-                  >
-                    Close
-                  </Button>
-                </div>
-              </div>
+                  {isSuitableForUserSkin(selectedProduct) && (
+                    <Badge variant="secondary" className="text-sm">
+                      ✨ Suitable for your {userSkinType} skin type
+                    </Badge>
+                  )}
+
+                  <div>
+                    <h3 className="font-semibold mb-2">Description</h3>
+                    <p className="text-muted-foreground">{selectedProduct.description}</p>
+                  </div>
+
+                  {selectedProduct.ingredients && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Key Ingredients</h3>
+                      <p className="text-sm text-muted-foreground">{selectedProduct.ingredients}</p>
+                    </div>
+                  )}
+
+                  {selectedProduct.benefits && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Benefits</h3>
+                      <p className="text-sm text-muted-foreground">{selectedProduct.benefits}</p>
+                    </div>
+                  )}
+
+                  {selectedProduct.concerns && selectedProduct.concerns.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Addresses Concerns</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedProduct.concerns.map((concern) => (
+                          <Badge key={concern} variant="outline">
+                            {concern}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-3 pt-4">
+                    <Button
+                      onClick={() => handleBuyNow(selectedProduct)}
+                      className="flex-1"
+                      size="lg"
+                    >
+                      <ShoppingCart className="h-5 w-5 mr-2" />
+                      Buy Now
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowReviewDialog(true)}
+                      size="lg"
+                    >
+                      <MessageCircle className="h-5 w-5 mr-2" />
+                      Write Review
+                    </Button>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="reviews" className="mt-6">
+                  <ProductReviews key={reviewsKey} productId={selectedProduct.id} />
+                </TabsContent>
+              </Tabs>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Review Dialog */}
+      {selectedProduct && (
+        <ProductReviewDialog
+          productId={selectedProduct.id}
+          productName={selectedProduct.name}
+          open={showReviewDialog}
+          onOpenChange={setShowReviewDialog}
+          onReviewSubmitted={() => {
+            setReviewsKey(prev => prev + 1);
+            toast({
+              title: "Review Posted!",
+              description: "Thank you for sharing your experience",
+            });
+          }}
+        />
+      )}
     </div>
   );
 };
