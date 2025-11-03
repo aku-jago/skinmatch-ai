@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { ScanFace, MessageSquare, Sparkles, TrendingUp, ShoppingBag, Calendar, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SkinHealthAnalytics from '@/components/SkinHealthAnalytics';
+import StreakTracker from '@/components/StreakTracker';
+import ProductRecommendations from '@/components/ProductRecommendations';
+import BeforeAfterComparison from '@/components/BeforeAfterComparison';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -95,6 +98,24 @@ const Dashboard = () => {
           {/* Skin Health Analytics Section */}
           <div className="mb-8">
             <SkinHealthAnalytics userId={user.id} />
+          </div>
+
+          {/* Streak & Achievements */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Konsistensi & Pencapaian</h2>
+            <StreakTracker />
+          </div>
+
+          {/* Product Recommendations */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Rekomendasi Produk</h2>
+            <ProductRecommendations />
+          </div>
+
+          {/* Before/After Comparison */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold mb-4">Progress Kulit Anda</h2>
+            <BeforeAfterComparison />
           </div>
 
           {/* Quick Actions */}

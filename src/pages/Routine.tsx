@@ -123,7 +123,6 @@ const Routine = () => {
     if (!user) return;
 
     try {
-      // Check if already completed today
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       
@@ -142,7 +141,6 @@ const Routine = () => {
         return;
       }
 
-      // Add completion record
       const { error: completionError } = await supabase
         .from('routine_completions')
         .insert({
@@ -153,7 +151,6 @@ const Routine = () => {
 
       if (completionError) throw completionError;
 
-      // Update streak
       const newProgress = Math.min(currentProgress + 1, 30);
       
       const { error: updateError } = await supabase
@@ -162,6 +159,10 @@ const Routine = () => {
         .eq('id', id);
 
       if (updateError) throw updateError;
+
+      // Update streak and check achievements
+      await updateUserStreak();
+      await checkAchievements(newProgress);
 
       if (newProgress === 7 || newProgress === 14 || newProgress === 30) {
         toast({
@@ -183,6 +184,130 @@ const Routine = () => {
         description: "Failed to update progress",
         variant: "destructive",
       });
+    }
+  };
+
+  const updateUserStreak = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: streak, error: fetchError } = await supabase
+        .from('user_streaks')
+        .select('*')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+      if (!streak) {
+        await supabase.from('user_streaks').insert({
+          user_id: user?.id,
+          current_streak: 1,
+          longest_streak: 1,
+          last_completion_date: today,
+          total_completions: 1
+        });
+      } else {
+        const lastDate = streak.last_completion_date;
+        let newStreak = streak.current_streak;
+
+        if (lastDate === yesterdayStr) {
+          newStreak = streak.current_streak + 1;
+        } else if (lastDate !== today) {
+          newStreak = 1;
+        }
+
+        const newLongest = Math.max(newStreak, streak.longest_streak);
+
+        await supabase
+          .from('user_streaks')
+          .update({
+            current_streak: newStreak,
+            longest_streak: newLongest,
+            last_completion_date: today,
+            total_completions: streak.total_completions + 1
+          })
+          .eq('user_id', user?.id);
+      }
+    } catch (error) {
+      console.error('Error updating streak:', error);
+    }
+  };
+
+  const checkAchievements = async (progress: number) => {
+    try {
+      const achievements = [];
+
+      const { data: streak } = await supabase
+        .from('user_streaks')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (!streak) return;
+
+      const { data: existingAchievements } = await supabase
+        .from('achievements')
+        .select('achievement_type')
+        .eq('user_id', user?.id);
+
+      const hasAchievement = (type: string) => 
+        existingAchievements?.some(a => a.achievement_type === type);
+
+      if (streak.total_completions === 1 && !hasAchievement('first_routine')) {
+        achievements.push({
+          user_id: user?.id,
+          achievement_type: 'first_routine',
+          title: 'Langkah Pertama',
+          description: 'Menyelesaikan routine pertama kali',
+          icon: 'star'
+        });
+      }
+
+      if (streak.current_streak === 7 && !hasAchievement('week_streak')) {
+        achievements.push({
+          user_id: user?.id,
+          achievement_type: 'week_streak',
+          title: 'Konsisten 1 Minggu',
+          description: 'Menyelesaikan routine 7 hari berturut-turut',
+          icon: 'flame'
+        });
+      }
+
+      if (streak.current_streak === 30 && !hasAchievement('month_streak')) {
+        achievements.push({
+          user_id: user?.id,
+          achievement_type: 'month_streak',
+          title: 'Juara Konsistensi',
+          description: 'Menyelesaikan routine 30 hari berturut-turut',
+          icon: 'trophy'
+        });
+      }
+
+      if (streak.total_completions === 50 && !hasAchievement('milestone_50')) {
+        achievements.push({
+          user_id: user?.id,
+          achievement_type: 'milestone_50',
+          title: 'Milestone 50',
+          description: 'Menyelesaikan 50 routine',
+          icon: 'award'
+        });
+      }
+
+      if (achievements.length > 0) {
+        await supabase.from('achievements').insert(achievements);
+        
+        toast({
+          title: '🎉 Achievement Unlocked!',
+          description: achievements[0].title,
+        });
+      }
+    } catch (error) {
+      console.error('Error checking achievements:', error);
     }
   };
 

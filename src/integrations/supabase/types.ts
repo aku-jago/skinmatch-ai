@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          achievement_type: string
+          description: string | null
+          earned_at: string
+          icon: string | null
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          achievement_type: string
+          description?: string | null
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          achievement_type?: string
+          description?: string | null
+          earned_at?: string
+          icon?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_messages: {
         Row: {
           ai_response: string | null
@@ -110,6 +148,48 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      product_recommendations: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          product_id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          product_id: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recommendations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recommendations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_reviews: {
         Row: {
@@ -356,6 +436,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string
+          current_streak: number
+          id: string
+          last_completion_date: string | null
+          longest_streak: number
+          total_completions: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          total_completions?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak?: number
+          id?: string
+          last_completion_date?: string | null
+          longest_streak?: number
+          total_completions?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_streaks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
