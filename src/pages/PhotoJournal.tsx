@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Camera, Upload, TrendingUp, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { compressImage } from '@/lib/imageCompression';
 
 interface PhotoJournal {
   id: string;
@@ -139,9 +140,12 @@ const PhotoJournal = () => {
     setAnalyzing(true);
 
     try {
-      // Convert blob to base64
+      // Compress image first
+      const compressedBlob = await compressImage(imageFile);
+      
+      // Convert compressed blob to base64
       const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
+      reader.readAsDataURL(compressedBlob);
       
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {

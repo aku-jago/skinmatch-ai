@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import Shop from "./pages/Shop";
 import Routine from "./pages/Routine";
 import PhotoJournal from "./pages/PhotoJournal";
+import ProductScan from "./pages/ProductScan";
 import AccountSettings from "./pages/AccountSettings";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/shop" element={<Shop />} />
             <Route path="/routine" element={<Routine />} />
             <Route path="/progress" element={<PhotoJournal />} />
+            <Route path="/product-scan" element={<ProductScan />} />
             <Route path="/settings" element={<AccountSettings />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

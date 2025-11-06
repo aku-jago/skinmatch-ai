@@ -238,6 +238,51 @@ export type Database = {
           },
         ]
       }
+      product_scans: {
+        Row: {
+          allergens_detected: Json | null
+          analysis_summary: string | null
+          created_at: string
+          id: string
+          image_url: string
+          ingredients_detected: string[] | null
+          irritants_detected: Json | null
+          patch_test_recommended: boolean | null
+          product_name: string | null
+          recommendations: string | null
+          safety_score: number | null
+          user_id: string
+        }
+        Insert: {
+          allergens_detected?: Json | null
+          analysis_summary?: string | null
+          created_at?: string
+          id?: string
+          image_url: string
+          ingredients_detected?: string[] | null
+          irritants_detected?: Json | null
+          patch_test_recommended?: boolean | null
+          product_name?: string | null
+          recommendations?: string | null
+          safety_score?: number | null
+          user_id: string
+        }
+        Update: {
+          allergens_detected?: Json | null
+          analysis_summary?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string
+          ingredients_detected?: string[] | null
+          irritants_detected?: Json | null
+          patch_test_recommended?: boolean | null
+          product_name?: string | null
+          recommendations?: string | null
+          safety_score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           benefits: string | null

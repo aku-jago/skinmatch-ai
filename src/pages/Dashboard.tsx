@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ScanFace, MessageSquare, Sparkles, TrendingUp, ShoppingBag, Calendar, Camera } from 'lucide-react';
+import { ScanFace, MessageSquare, Sparkles, TrendingUp, ShoppingBag, Calendar, Camera, ShieldAlert } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import SkinHealthAnalytics from '@/components/SkinHealthAnalytics';
 import StreakTracker from '@/components/StreakTracker';
@@ -64,33 +64,54 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Quick Stats */}
+          {/* Latest Skin Analysis - Cleaned Up */}
           {latestAnalysis && (
             <Card className="shadow-soft">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <TrendingUp className="h-5 w-5 text-primary" />
-                  Your Latest Skin Analysis
+                  Latest Skin Analysis
                 </CardTitle>
                 <CardDescription>
-                  {new Date(latestAnalysis.created_at).toLocaleDateString()}
+                  {new Date(latestAnalysis.created_at).toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric'
+                  })}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <p className="text-lg">
-                    <span className="font-semibold">Skin Type:</span>{' '}
-                    <span className="text-primary capitalize">{latestAnalysis.skin_type}</span>
-                  </p>
-                  {latestAnalysis.confidence_score && (
-                    <p className="text-sm text-muted-foreground">
-                      Confidence: {(latestAnalysis.confidence_score * 100).toFixed(0)}%
-                    </p>
-                  )}
-                  {latestAnalysis.recommendations && (
-                    <p className="text-sm mt-4">{latestAnalysis.recommendations}</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-lg bg-gradient-card">
+                    <p className="text-sm text-muted-foreground mb-1">Jenis Kulit</p>
+                    <p className="text-2xl font-bold text-primary capitalize">{latestAnalysis.skin_type}</p>
+                    {latestAnalysis.confidence_score && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Confidence: {(latestAnalysis.confidence_score * 100).toFixed(0)}%
+                      </p>
+                    )}
+                  </div>
+                  
+                  {latestAnalysis.detected_issues && latestAnalysis.detected_issues.length > 0 && (
+                    <div className="p-4 rounded-lg bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-2">Masalah Terdeteksi</p>
+                      <div className="flex flex-wrap gap-2">
+                        {latestAnalysis.detected_issues.slice(0, 3).map((issue: string, idx: number) => (
+                          <span key={idx} className="px-2 py-1 bg-accent/20 text-accent rounded text-xs">
+                            {issue}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
+                
+                {latestAnalysis.recommendations && (
+                  <div className="mt-4 p-3 rounded-lg bg-primary/5">
+                    <p className="text-xs text-muted-foreground mb-1">Rekomendasi Singkat</p>
+                    <p className="text-sm line-clamp-2">{latestAnalysis.recommendations}</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
@@ -232,11 +253,33 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/profile')}>
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/product-scan')}>
                 <CardHeader>
                   <div className="flex items-center gap-4">
                     <div className="p-3 rounded-lg bg-gradient-to-br from-accent/70 to-secondary/70 group-hover:scale-110 transition-transform">
-                      <TrendingUp className="h-6 w-6 text-accent-foreground" />
+                      <ShieldAlert className="h-6 w-6 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle>Product Scan</CardTitle>
+                      <CardDescription>Cek keamanan produk</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Scan produk untuk deteksi allergen dan irritant
+                  </p>
+                  <Button variant="outline" className="w-full">
+                    Scan Produk
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/profile')}>
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-lg bg-gradient-to-br from-primary/70 to-accent/70 group-hover:scale-110 transition-transform">
+                      <TrendingUp className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div>
                       <CardTitle>My Profile</CardTitle>
