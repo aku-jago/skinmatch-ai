@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.analyze-product-image]
 verify_jwt = true
+
+[functions.generate-personalized-routine]
+verify_jwt = true

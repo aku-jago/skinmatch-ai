@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Sun, Moon, Plus, Trash2, Bell } from 'lucide-react';
+import { PersonalizedRoutineGenerator } from '@/components/PersonalizedRoutineGenerator';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -323,15 +324,20 @@ const Routine = () => {
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-4xl mx-auto space-y-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                My Skincare Routines
-              </h1>
-              <p className="text-muted-foreground mt-2">
-                Build and track your daily skincare habits
-              </p>
-            </div>
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              My Skincare Routines
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Build and track your daily skincare habits
+            </p>
+          </div>
+
+          {/* AI Personalized Routine Generator */}
+          <PersonalizedRoutineGenerator onRoutineSaved={loadRoutines} />
+
+          <div className="flex justify-between items-center mt-8">
+            <h2 className="text-2xl font-bold">My Routines</h2>
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
               <DialogTrigger asChild>
                 <Button size="lg">
