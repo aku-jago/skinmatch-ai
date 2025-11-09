@@ -84,6 +84,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          routine_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          routine_id?: string | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          routine_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string
@@ -339,6 +372,8 @@ export type Database = {
           gender: string | null
           id: string
           name: string
+          notification_enabled: boolean | null
+          notification_permission: string | null
           preferences: Json | null
           skin_type: string | null
           updated_at: string | null
@@ -350,6 +385,8 @@ export type Database = {
           gender?: string | null
           id: string
           name: string
+          notification_enabled?: boolean | null
+          notification_permission?: string | null
           preferences?: Json | null
           skin_type?: string | null
           updated_at?: string | null
@@ -361,6 +398,8 @@ export type Database = {
           gender?: string | null
           id?: string
           name?: string
+          notification_enabled?: boolean | null
+          notification_permission?: string | null
           preferences?: Json | null
           skin_type?: string | null
           updated_at?: string | null

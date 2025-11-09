@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Sparkles, User, LogOut, Camera, MessageSquare, Home, ShoppingBag, Calendar, TrendingUp, Settings, Menu, X, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
+import { NotificationBell } from '@/components/NotificationBell';
 
 export const Navigation = () => {
   const { user, signOut } = useAuth();
@@ -104,6 +105,7 @@ export const Navigation = () => {
                   <Settings className="h-4 w-4" />
                 </Button>
               </Link>
+              <NotificationBell />
               <Link to="/profile">
                 <Button 
                   variant={isActive('/profile') ? 'default' : 'ghost'} 
@@ -227,6 +229,11 @@ export const Navigation = () => {
                       Profile
                     </Button>
                   </Link>
+                  <div className="border-t pt-2 mt-2">
+                    <div className="px-3 py-2">
+                      <NotificationBell />
+                    </div>
+                  </div>
                   <Button 
                     variant="ghost" 
                     className="w-full justify-start gap-3 text-destructive"

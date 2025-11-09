@@ -206,6 +206,9 @@ const AccountSettings = () => {
             </CardContent>
           </Card>
 
+          {/* Notification Settings */}
+          <NotificationSettings />
+
           {/* Account Info */}
           <Card className="shadow-soft">
             <CardHeader>
