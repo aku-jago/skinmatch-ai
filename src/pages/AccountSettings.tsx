@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Lock, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { NotificationSettings } from '@/components/NotificationSettings';
 
 const AccountSettings = () => {
   const { user, loading } = useAuth();
