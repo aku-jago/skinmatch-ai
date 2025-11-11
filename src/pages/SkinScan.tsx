@@ -61,17 +61,24 @@ const SkinScan = () => {
         const videoEl = videoRef.current;
         videoEl.srcObject = mediaStream;
 
-        const playIfReady = () => {
-          videoEl.play().catch(() => {
-            // Ignore play errors; often resolved after user gesture or metadata load
-          });
-        };
-
-        if ('onloadedmetadata' in videoEl) {
-          videoEl.onloadedmetadata = playIfReady;
-        }
-        // Try to play immediately as well
-        videoEl.play().catch(() => {/* will try after metadata */});
+        // Wait for metadata to be loaded before playing
+        await new Promise<void>((resolve) => {
+          videoEl.onloadedmetadata = () => {
+            videoEl.play()
+              .then(() => {
+                console.log('Video playing successfully');
+                resolve();
+              })
+              .catch((err) => {
+                console.error('Play error:', err);
+                // Try again after a short delay
+                setTimeout(() => {
+                  videoEl.play().catch(console.error);
+                }, 100);
+                resolve();
+              });
+          };
+        });
       }
 
       setCapturing(true);

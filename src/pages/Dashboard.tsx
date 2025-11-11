@@ -109,7 +109,7 @@ const Dashboard = () => {
                 {latestAnalysis.recommendations && (
                   <div className="mt-4 p-3 rounded-lg bg-primary/5">
                     <p className="text-xs text-muted-foreground mb-1">Rekomendasi Singkat</p>
-                    <p className="text-sm line-clamp-2">{latestAnalysis.recommendations}</p>
+                    <p className="text-sm whitespace-pre-line leading-relaxed">{latestAnalysis.recommendations}</p>
                   </div>
                 )}
               </CardContent>
