@@ -78,10 +78,11 @@ export default function ProductRecommendations() {
         .limit(1)
         .single();
 
-      // Get all products
+      // Get up to 50 products for recommendation analysis
       const { data: products } = await supabase
         .from('products')
-        .select('*');
+        .select('*')
+        .limit(50);
 
       if (!products || products.length === 0) {
         toast({
