@@ -17,13 +17,11 @@ const SkinScan = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
-  const [capturing, setCapturing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [recommendedProducts, setRecommendedProducts] = useState<any[]>([]);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -31,106 +29,17 @@ const SkinScan = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [stream]);
-
-  const startCamera = async () => {
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('getUserMedia is not supported in this browser');
-      }
-
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: 'user' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
+  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setCapturedImage(imageUrl);
+        analyzeSkin(file, imageUrl);
       };
-
-      let mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
-
-      if (videoRef.current) {
-        const videoEl = videoRef.current;
-        videoEl.srcObject = mediaStream;
-
-        // Wait for metadata to be loaded before playing
-        await new Promise<void>((resolve) => {
-          videoEl.onloadedmetadata = () => {
-            videoEl.play()
-              .then(() => {
-                console.log('Video playing successfully');
-                resolve();
-              })
-              .catch((err) => {
-                console.error('Play error:', err);
-                // Try again after a short delay
-                setTimeout(() => {
-                  videoEl.play().catch(console.error);
-                }, 100);
-                resolve();
-              });
-          };
-        });
-      }
-
-      setCapturing(true);
-    } catch (primaryError) {
-      // Retry with a more permissive constraint as fallback
-      try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        setStream(mediaStream);
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          await videoRef.current.play().catch(() => {});
-        }
-        setCapturing(true);
-      } catch (error) {
-        console.error('Error accessing camera:', primaryError, error);
-        toast({
-          title: "Camera Error",
-          description: "Tidak dapat mengakses kamera. Pastikan izin sudah diberikan dan coba gunakan tombol Upload Photo sebagai alternatif.",
-          variant: "destructive"
-        });
-      }
+      reader.readAsDataURL(file);
     }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-    setCapturing(false);
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
-      const imageUrl = canvas.toDataURL('image/jpeg');
-      setCapturedImage(imageUrl);
-      
-      canvas.toBlob((blob) => {
-        if (blob) {
-          analyzeSkin(blob, imageUrl);
-        }
-      }, 'image/jpeg');
-    }
-
-    stopCamera();
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -270,35 +179,7 @@ const SkinScan = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {capturing ? (
-                <div className="space-y-4">
-                  <div className="relative rounded-lg overflow-hidden bg-black">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full rounded-lg"
-                    />
-                    <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                      Camera Active
-                    </div>
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground">
-                    Position your face in the frame with good lighting
-                  </p>
-                  <div className="flex gap-3">
-                    <Button onClick={capturePhoto} className="flex-1" size="lg">
-                      <Camera className="h-5 w-5 mr-2" />
-                      Capture Photo
-                    </Button>
-                    <Button onClick={stopCamera} variant="outline" size="lg">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : scanning ? (
+              {scanning ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   {capturedImage && (
                     <img src={capturedImage} alt="Captured" className="w-64 h-64 object-cover rounded-lg mb-4" />
@@ -307,7 +188,7 @@ const SkinScan = () => {
                   <p className="text-muted-foreground">Menganalisis kulit Anda dengan AI...</p>
                   <p className="text-sm text-muted-foreground">Ini mungkin memakan waktu beberapa saat</p>
                 </div>
-              ) : !result && (
+              ) : !result ? (
                 <div className="space-y-4">
                   <div className="aspect-square max-w-sm mx-auto rounded-lg overflow-hidden bg-gradient-card border border-primary/20 flex items-center justify-center p-8">
                     <div className="text-center space-y-4">
@@ -322,7 +203,7 @@ const SkinScan = () => {
                   </div>
                   <div className="flex gap-3">
                     <Button 
-                      onClick={startCamera} 
+                      onClick={() => cameraInputRef.current?.click()} 
                       variant="hero"
                       size="lg"
                       className="flex-1"
@@ -341,6 +222,14 @@ const SkinScan = () => {
                     </Button>
                   </div>
                   <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="user"
+                    onChange={handleCameraCapture}
+                    className="hidden"
+                  />
+                  <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
@@ -348,55 +237,52 @@ const SkinScan = () => {
                     className="hidden"
                   />
                 </div>
-              )}
-
-              {result && (
-                <div className="space-y-4 animate-in fade-in-50 duration-500">
+              ) : (
+                <div className="space-y-6">
+                  {/* Captured Image */}
                   {capturedImage && (
-                    <div className="rounded-lg overflow-hidden">
-                      <img src={capturedImage} alt="Analyzed" className="w-full object-cover" />
+                    <div className="w-full max-w-md mx-auto">
+                      <img src={capturedImage} alt="Scanned face" className="w-full rounded-lg shadow-soft" />
                     </div>
                   )}
-                  
-                  <div className="p-6 rounded-lg bg-gradient-card border border-primary/20">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <h3 className="font-semibold text-lg">Hasil Analisis</h3>
+
+                  {/* Analysis Results */}
+                  <div className="grid gap-6">
+                    <div className="flex items-start gap-4 p-4 bg-gradient-card rounded-lg border border-primary/20">
+                      <Sparkles className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-lg mb-2">Your Skin Type</h3>
+                        <Badge className="bg-primary/10 text-primary border-primary/20">
+                          {result.skin_type.toUpperCase()}
+                        </Badge>
+                        <p className="text-sm text-muted-foreground mt-2">
+                          Confidence: {(result.confidence_score * 100).toFixed(1)}%
+                        </p>
+                      </div>
                     </div>
-                    <div className="space-y-3">
+
+                    {result.detected_issues && result.detected_issues.length > 0 && (
                       <div>
-                        <p className="text-sm text-muted-foreground">Jenis Kulit</p>
-                        <p className="text-2xl font-bold capitalize text-primary">{result.skin_type}</p>
+                        <p className="text-sm text-muted-foreground mb-2">Detected Concerns</p>
+                        <div className="flex flex-wrap gap-2">
+                          {result.detected_issues.map((issue: string, index: number) => (
+                            <Badge key={index} variant="secondary">{issue}</Badge>
+                          ))}
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm text-muted-foreground">Tingkat Keyakinan</p>
-                        <p className="text-lg font-semibold">{(result.confidence_score * 100).toFixed(0)}%</p>
+                    )}
+
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Analisis Detail</p>
+                      <div className="text-sm leading-relaxed p-4 bg-muted/50 rounded-lg">
+                        {result.detailed_analysis}
                       </div>
-                      {result.detected_issues && result.detected_issues.length > 0 && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">Masalah yang Terdeteksi</p>
-                          <div className="flex flex-wrap gap-2">
-                            {result.detected_issues.map((issue: string, idx: number) => (
-                              <span key={idx} className="px-3 py-1 bg-accent/10 text-accent rounded-full text-sm">
-                                {issue}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                      {result.detailed_analysis && (
-                        <div>
-                          <p className="text-sm text-muted-foreground mb-2">Analisis Detail</p>
-                          <div className="text-sm leading-relaxed p-4 bg-muted/50 rounded-lg">
-                            {result.detailed_analysis}
-                          </div>
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-2">Rekomendasi AI</p>
-                        <div className="text-sm whitespace-pre-line leading-relaxed p-4 bg-primary/5 rounded-lg">
-                          {result.recommendations}
-                        </div>
+                    </div>
+
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-2">Rekomendasi AI</p>
+                      <div className="text-sm whitespace-pre-line leading-relaxed p-4 bg-primary/5 rounded-lg">
+                        {result.recommendations}
                       </div>
                     </div>
                   </div>

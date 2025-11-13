@@ -22,11 +22,9 @@ const PhotoJournal = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [journals, setJournals] = useState<PhotoJournal[]>([]);
-  const [capturing, setCapturing] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -35,14 +33,6 @@ const PhotoJournal = () => {
       loadJournals();
     }
   }, [user, loading, navigate]);
-
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [stream]);
 
   const loadJournals = async () => {
     if (!user) return;
@@ -61,70 +51,11 @@ const PhotoJournal = () => {
     setJournals(data || []);
   };
 
-  const startCamera = async () => {
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('getUserMedia is not supported');
-      }
-
-      const constraints: MediaStreamConstraints = {
-        video: {
-          facingMode: { ideal: 'user' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-        },
-        audio: false,
-      };
-
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      setStream(mediaStream);
-      
-      if (videoRef.current) {
-        const videoEl = videoRef.current;
-        videoEl.srcObject = mediaStream;
-        
-        videoEl.onloadedmetadata = () => {
-          videoEl.play().catch(() => {});
-        };
-        videoEl.play().catch(() => {});
-      }
-      
-      setCapturing(true);
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast({
-        title: "Camera Error",
-        description: "Tidak dapat mengakses kamera. Pastikan izin sudah diberikan.",
-        variant: "destructive"
-      });
+  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      analyzePhoto(file);
     }
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
-      canvas.toBlob((blob) => {
-        if (blob) {
-          analyzePhoto(blob);
-        }
-      }, 'image/jpeg');
-    }
-
-    stopCamera();
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-    setCapturing(false);
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -248,42 +179,14 @@ const PhotoJournal = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {capturing ? (
-                <div className="space-y-4">
-                  <div className="relative rounded-lg overflow-hidden bg-black">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="w-full rounded-lg"
-                    />
-                    <div className="absolute top-4 left-4 bg-primary/90 text-primary-foreground px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2">
-                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                      Kamera Aktif
-                    </div>
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground">
-                    Posisikan wajah Anda dengan pencahayaan yang baik
-                  </p>
-                  <div className="flex gap-3">
-                    <Button onClick={capturePhoto} className="flex-1" size="lg">
-                      <Camera className="h-5 w-5 mr-2" />
-                      Ambil Foto
-                    </Button>
-                    <Button onClick={stopCamera} variant="outline" size="lg">
-                      Batal
-                    </Button>
-                  </div>
-                </div>
-              ) : analyzing ? (
+              {analyzing ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="h-12 w-12 text-primary animate-spin" />
                   <p className="text-muted-foreground">Menganalisis progress kulit Anda...</p>
                 </div>
               ) : (
                 <div className="flex gap-3">
-                  <Button onClick={startCamera} variant="hero" size="lg" className="flex-1">
+                  <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="flex-1">
                     <Camera className="h-5 w-5 mr-2" />
                     Open Camera
                   </Button>
