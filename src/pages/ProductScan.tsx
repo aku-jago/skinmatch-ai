@@ -15,12 +15,10 @@ const ProductScan = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [scanning, setScanning] = useState(false);
-  const [capturing, setCapturing] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -28,69 +26,17 @@ const ProductScan = () => {
     }
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, [stream]);
-
-  const startCamera = async () => {
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('Camera not supported');
-      }
-
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' }, 
-        audio: false 
-      });
-      setStream(mediaStream);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play().catch(() => {});
-      }
-
-      setCapturing(true);
-    } catch (error) {
-      console.error('Error accessing camera:', error);
-      toast({
-        title: "Camera Error",
-        description: "Tidak dapat mengakses kamera. Gunakan tombol Upload sebagai alternatif.",
-        variant: "destructive"
-      });
+  const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageUrl = e.target?.result as string;
+        setCapturedImage(imageUrl);
+        analyzeProduct(file, imageUrl);
+      };
+      reader.readAsDataURL(file);
     }
-  };
-
-  const stopCamera = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      setStream(null);
-    }
-    setCapturing(false);
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current) return;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      ctx.drawImage(videoRef.current, 0, 0);
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const imageUrl = canvas.toDataURL('image/jpeg');
-          setCapturedImage(imageUrl);
-          analyzeProduct(blob, imageUrl);
-        }
-      }, 'image/jpeg');
-    }
-
-    stopCamera();
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -209,22 +155,7 @@ const ProductScan = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {capturing ? (
-                <div className="space-y-4">
-                  <div className="relative rounded-lg overflow-hidden bg-black">
-                    <video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg" />
-                  </div>
-                  <div className="flex gap-3">
-                    <Button onClick={capturePhoto} className="flex-1" size="lg">
-                      <Camera className="h-5 w-5 mr-2" />
-                      Capture
-                    </Button>
-                    <Button onClick={stopCamera} variant="outline" size="lg">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : scanning ? (
+              {scanning ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   {capturedImage && (
                     <img src={capturedImage} alt="Product" className="w-64 h-64 object-cover rounded-lg mb-4" />
@@ -246,7 +177,7 @@ const ProductScan = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button onClick={startCamera} variant="hero" size="lg" className="flex-1">
+                    <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="flex-1">
                       <Camera className="h-5 w-5 mr-2" />
                       Open Camera
                     </Button>
