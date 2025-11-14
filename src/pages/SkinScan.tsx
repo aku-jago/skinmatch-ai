@@ -60,12 +60,17 @@ const SkinScan = () => {
     setResult(null);
 
     try {
-      // Compress image first
-      const compressedBlob = await compressImage(imageFile);
+      // Compress image first (fallback to original if compression fails or format unsupported)
+      let blobToEncode: Blob = imageFile;
+      try {
+        blobToEncode = await compressImage(imageFile);
+      } catch (e) {
+        console.warn('Compression failed, using original image:', e);
+      }
       
       // Convert compressed blob to base64
       const reader = new FileReader();
-      reader.readAsDataURL(compressedBlob);
+      reader.readAsDataURL(blobToEncode);
       
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {

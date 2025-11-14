@@ -57,12 +57,17 @@ const ProductScan = () => {
     setResult(null);
 
     try {
-      // Compress image first
-      const compressedBlob = await compressImage(imageFile);
+      // Compress image first (fallback to original if compression fails or format unsupported)
+      let blobToEncode: Blob = imageFile;
+      try {
+        blobToEncode = await compressImage(imageFile);
+      } catch (e) {
+        console.warn('Compression failed, using original image:', e);
+      }
       
       // Convert to base64
       const reader = new FileReader();
-      reader.readAsDataURL(compressedBlob);
+      reader.readAsDataURL(blobToEncode);
       
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {
@@ -186,7 +191,21 @@ const ProductScan = () => {
                       Upload Photo
                     </Button>
                   </div>
-                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                  <input
+                    ref={cameraInputRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    onChange={handleCameraCapture}
+                    className="hidden"
+                  />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
                 </div>
               ) : (
                 <div className="space-y-6">
