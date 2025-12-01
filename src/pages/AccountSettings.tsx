@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigation } from '@/components/Navigation';
+import { useRestartTour } from '@/components/OnboardingTour';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Lock, Mail } from 'lucide-react';
+import { Lock, Mail, BookOpen, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { NotificationSettings } from '@/components/NotificationSettings';
@@ -15,6 +16,7 @@ const AccountSettings = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const restartTour = useRestartTour();
   const [passwords, setPasswords] = useState({
     current: '',
     new: '',
@@ -209,6 +211,45 @@ const AccountSettings = () => {
 
           {/* Notification Settings */}
           <NotificationSettings />
+
+          {/* App Preferences */}
+          <Card className="shadow-soft">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                App Preferences
+              </CardTitle>
+              <CardDescription>
+                Customize your app experience
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-start justify-between p-4 border rounded-lg bg-gradient-to-br from-primary/5 to-accent/5">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h4 className="font-semibold">Onboarding Tour</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Lihat kembali penjelasan fitur-fitur utama aplikasi SkinMatch AI
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => {
+                      restartTour();
+                      toast({
+                        title: "Tour dimulai ulang",
+                        description: "Halaman akan dimuat ulang untuk menampilkan onboarding tour",
+                      });
+                    }}
+                  >
+                    Mulai Tour Lagi
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Account Info */}
           <Card className="shadow-soft">
