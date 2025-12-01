@@ -306,13 +306,20 @@ const SkinScan = () => {
                       </div>
                     </div>
 
-                    {result.detected_issues && result.detected_issues.length > 0 && (
+                    {Array.isArray(result.detected_issues) && result.detected_issues.length > 0 && (
                       <div>
                         <p className="text-sm text-muted-foreground mb-2">Detected Concerns</p>
                         <div className="flex flex-wrap gap-2">
-                          {result.detected_issues.map((issue: string, index: number) => (
-                            <Badge key={index} variant="secondary">{issue}</Badge>
-                          ))}
+                          {result.detected_issues.map((issue: any, index: number) => {
+                            const label = typeof issue === 'string'
+                              ? issue
+                              : issue?.detail || issue?.name || issue?.status || 'Unknown';
+                            return (
+                              <Badge key={index} variant="secondary">
+                                {label}
+                              </Badge>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
