@@ -64,29 +64,13 @@ export default function ProductRecommendations() {
   const generateRecommendations = async () => {
     setGenerating(true);
     try {
-      // Get the current session for authentication
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      
-      if (!accessToken) {
-        toast({
-          title: 'Login diperlukan',
-          description: 'Silakan login terlebih dahulu untuk mendapatkan rekomendasi.',
-          variant: 'destructive'
-        });
-        return;
-      }
-
       toast({
         title: 'Menganalisis...',
         description: 'AI sedang menganalisis kulit Anda untuk rekomendasi terbaik.',
       });
 
-      const { data, error } = await supabase.functions.invoke('generate-product-recommendations', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      // supabase.functions.invoke automatically includes auth headers
+      const { data, error } = await supabase.functions.invoke('generate-product-recommendations');
 
       if (error) {
         console.error('Function invoke error:', error);

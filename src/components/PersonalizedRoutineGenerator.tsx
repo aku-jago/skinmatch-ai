@@ -45,19 +45,8 @@ export function PersonalizedRoutineGenerator({ onRoutineSaved }: { onRoutineSave
   const handleGenerate = async () => {
     setSaving(true);
     try {
-      // Get the current session for authentication
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData.session?.access_token;
-      
-      if (!accessToken) {
-        throw new Error("Silakan login terlebih dahulu");
-      }
-
-      const { data, error } = await supabase.functions.invoke('generate-personalized-routine', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      // supabase.functions.invoke automatically includes auth headers
+      const { data, error } = await supabase.functions.invoke('generate-personalized-routine');
 
       if (error) throw error;
 
