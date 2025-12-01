@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Search, ShoppingCart, Star, MessageCircle } from 'lucide-react';
+import { formatRupiah } from '@/lib/formatCurrency';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import {
@@ -228,8 +229,8 @@ const Shop = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-primary">
-                      ${product.price.toFixed(2)}
+                    <span className="text-xl font-bold text-primary">
+                      {formatRupiah(product.price)}
                     </span>
                     <Badge variant="outline">{product.category}</Badge>
                   </div>
@@ -280,8 +281,8 @@ const Shop = () => {
                       <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
                       <span className="text-lg font-medium">{selectedProduct.rating?.toFixed(1)}</span>
                     </div>
-                    <span className="text-3xl font-bold text-primary">
-                      ${selectedProduct.price.toFixed(2)}
+                    <span className="text-2xl font-bold text-primary">
+                      {formatRupiah(selectedProduct.price)}
                     </span>
                   </div>
 

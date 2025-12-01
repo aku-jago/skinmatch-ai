@@ -4,7 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, ShoppingCart, Heart } from 'lucide-react';
+import { Sparkles, ShoppingCart } from 'lucide-react';
+import { formatRupiah } from '@/lib/formatCurrency';
 import { useToast } from '@/hooks/use-toast';
 
 interface Product {
@@ -183,7 +184,7 @@ export default function ProductRecommendations() {
                 
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-bold text-primary">
-                    Rp {rec.products.price.toLocaleString('id-ID')}
+                    {formatRupiah(rec.products.price)}
                   </span>
                   {rec.products.rating && (
                     <div className="flex items-center gap-1">
