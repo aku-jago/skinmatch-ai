@@ -45,32 +45,61 @@ const SkinHealthAnalytics = ({ userId }: SkinHealthAnalyticsProps) => {
 
       // Calculate health score based on recent analyses and progress
       if (analyses && analyses.length > 0) {
-        const latestAnalysis = analyses[0];
-        const baseScore = latestAnalysis.confidence_score || 50;
-        const issuesCount = (latestAnalysis.detected_issues as any)?.length || 0;
-        const progressBonus = Math.min(photos?.length || 0, 30);
+        const latestAnalysis = analyses[0] as any;
         
-        const calculatedScore = Math.min(
-          Math.max(baseScore - (issuesCount * 5) + progressBonus, 0),
-          100
-        );
+        // Try to use skin_health_score from AI analysis first (0-100)
+        let calculatedScore = 50; // Default score
+        
+        if (typeof latestAnalysis.skin_health_score === 'number' && latestAnalysis.skin_health_score >= 0 && latestAnalysis.skin_health_score <= 100) {
+          // Use AI-provided skin health score directly
+          calculatedScore = latestAnalysis.skin_health_score;
+        } else {
+          // Fallback calculation based on confidence_score and issues
+          const confidenceScore = latestAnalysis.confidence_score || 0.75;
+          const issuesCount = Array.isArray(latestAnalysis.detected_issues) ? latestAnalysis.detected_issues.length : 0;
+          
+          // Base score from confidence (0-1 → 50-85)
+          const baseScore = 50 + (confidenceScore * 35);
+          
+          // Deduct points for each issue detected
+          const issuesPenalty = issuesCount * 8;
+          
+          // Progress bonus (max 15 points)
+          const progressBonus = Math.min((photos?.length || 0) * 2, 15);
+          
+          calculatedScore = Math.min(Math.max(baseScore - issuesPenalty + progressBonus, 15), 100);
+        }
+        
         setHealthScore(Math.round(calculatedScore));
+      } else {
+        // No analyses yet - set a neutral starting score
+        setHealthScore(50);
       }
 
       // Prepare progress chart data from photo journals
       if (photos && photos.length > 0) {
-        const chartData = photos.slice(0, 10).reverse().map((photo: any, index) => {
+        const chartData = photos.slice(0, 10).reverse().map((photo: any) => {
           const analysisResult = photo.analysis_result || {};
+          
+          // Count actual improvements from analysis
           const improvements = Object.values(analysisResult).filter(
             (item: any) => item?.status === 'Membaik'
           ).length;
+          
+          // Count stable conditions (not worsening)
+          const stable = Object.values(analysisResult).filter(
+            (item: any) => item?.status === 'Stabil'
+          ).length;
+          
+          // Calculate score based on actual data (no artificial index boost)
+          const score = (improvements * 15) + (stable * 5);
           
           return {
             date: new Date(photo.created_at).toLocaleDateString('id-ID', { 
               month: 'short', 
               day: 'numeric' 
             }),
-            improvements: improvements * 10 + (index * 5)
+            improvements: score
           };
         });
         setProgressData(chartData);

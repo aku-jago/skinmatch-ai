@@ -9,6 +9,7 @@ import { Camera, Loader2, Sparkles, Upload, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/imageCompression';
+import { formatRupiah } from '@/lib/formatCurrency';
 
 const skinTypes = ['oily', 'dry', 'combination', 'normal', 'sensitive', 'acne-prone'];
 
@@ -310,7 +311,7 @@ const SkinScan = () => {
                                   <p className="text-sm mt-1 line-clamp-2">{product.description}</p>
                                   <div className="flex gap-2 mt-2">
                                     <Badge variant="secondary">{product.category}</Badge>
-                                    <Badge variant="outline">${product.price}</Badge>
+                                    <Badge variant="outline">{formatRupiah(product.price)}</Badge>
                                   </div>
                                 </div>
                               </div>
