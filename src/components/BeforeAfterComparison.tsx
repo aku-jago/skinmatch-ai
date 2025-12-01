@@ -241,13 +241,13 @@ export default function BeforeAfterComparison() {
                   <span className="font-medium">{analysis.skinType}</span>
                 </p>
               )}
-              {analysis.issues && analysis.issues.length > 0 && (
+                {analysis.issues && analysis.issues.length > 0 && (
                 <div className="text-sm">
                   <span className="text-muted-foreground">Masalah Terdeteksi:</span>
                   <div className="flex flex-wrap gap-1 mt-1">
-                    {analysis.issues.slice(0, 4).map((issue: string, idx: number) => (
+                    {analysis.issues.slice(0, 4).map((issue: any, idx: number) => (
                       <Badge key={idx} variant="outline" className="text-xs">
-                        {issue}
+                        {typeof issue === 'string' ? issue : issue?.detail || issue?.name || 'Unknown'}
                       </Badge>
                     ))}
                   </div>
