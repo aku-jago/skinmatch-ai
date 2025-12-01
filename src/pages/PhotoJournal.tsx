@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigation } from '@/components/Navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Camera, Upload, TrendingUp, Loader2 } from 'lucide-react';
+import { Camera, Upload, TrendingUp, Loader2, ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/imageCompression';
@@ -23,6 +23,8 @@ const PhotoJournal = () => {
   const { toast } = useToast();
   const [journals, setJournals] = useState<PhotoJournal[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [loadingJournals, setLoadingJournals] = useState(true);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -36,19 +38,26 @@ const PhotoJournal = () => {
 
   const loadJournals = async () => {
     if (!user) return;
+    setLoadingJournals(true);
 
-    const { data, error } = await supabase
-      .from('photo_journals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('photo_journals')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
+      if (error) {
+        console.error('Error loading journals:', error);
+        return;
+      }
+
+      setJournals(data || []);
+    } catch (error) {
       console.error('Error loading journals:', error);
-      return;
+    } finally {
+      setLoadingJournals(false);
     }
-
-    setJournals(data || []);
   };
 
   const handleCameraCapture = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,6 +65,8 @@ const PhotoJournal = () => {
     if (file) {
       analyzePhoto(file);
     }
+    // Reset input value to allow selecting the same file again
+    event.target.value = '';
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,25 +74,65 @@ const PhotoJournal = () => {
     if (file) {
       analyzePhoto(file);
     }
+    // Reset input value
+    event.target.value = '';
+  };
+
+  const uploadToStorage = async (file: Blob, userId: string): Promise<string> => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('skin-progress')
+      .upload(fileName, file, {
+        contentType: 'image/jpeg',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw new Error('Gagal mengupload gambar ke storage');
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from('skin-progress')
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
   };
 
   const analyzePhoto = async (imageFile: Blob) => {
     if (!user) return;
     
-    setAnalyzing(true);
+    setUploading(true);
+    setAnalyzing(false);
 
     try {
-      // Compress image first (fallback to original if compression fails or format unsupported)
-      let blobToEncode: Blob = imageFile;
+      // Step 1: Compress image (max 500KB = 0.5MB)
+      let compressedBlob: Blob = imageFile;
       try {
-        blobToEncode = await compressImage(imageFile);
+        compressedBlob = await compressImage(imageFile, 0.5);
+        console.log('Image compressed to:', (compressedBlob.size / 1024).toFixed(2), 'KB');
       } catch (e) {
         console.warn('Compression failed, using original image:', e);
       }
+
+      // Step 2: Upload to Supabase Storage
+      toast({
+        title: 'Mengupload foto...',
+        description: 'Mohon tunggu sebentar',
+      });
       
-      // Convert compressed blob to base64
+      const imageUrl = await uploadToStorage(compressedBlob, user.id);
+      console.log('Image uploaded to:', imageUrl);
+      
+      setUploading(false);
+      setAnalyzing(true);
+
+      // Step 3: Convert to base64 for AI analysis
       const reader = new FileReader();
-      reader.readAsDataURL(blobToEncode);
+      reader.readAsDataURL(compressedBlob);
       
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {
@@ -93,7 +144,12 @@ const PhotoJournal = () => {
       const imageBase64 = await base64Promise;
       const hasHistory = journals.length > 0;
 
-      // Call AI edge function
+      // Step 4: Call AI edge function for analysis
+      toast({
+        title: 'Menganalisis foto...',
+        description: 'AI sedang menganalisis progress kulit Anda',
+      });
+
       const { data, error: functionError } = await supabase.functions.invoke('analyze-progress-photo', {
         body: { imageBase64, hasHistory }
       });
@@ -107,11 +163,10 @@ const PhotoJournal = () => {
       }
 
       const analysis = data.analysis;
-      const mockImageUrl = URL.createObjectURL(imageFile);
 
+      // Step 5: Generate comparison summary
       let comparisonText = '';
       if (hasHistory) {
-        // Generate summary from improvements
         const improvements = analysis.improvements;
         const positiveChanges = Object.entries(improvements)
           .filter(([_, value]: [string, any]) => value.status === 'improved')
@@ -123,10 +178,11 @@ const PhotoJournal = () => {
         comparisonText = analysis.summary || 'Ini adalah foto baseline Anda. Terus tracking untuk melihat progress!';
       }
 
+      // Step 6: Save to database with the storage URL
       const { error } = await supabase.from('photo_journals').insert([
         {
           user_id: user.id,
-          image_url: mockImageUrl,
+          image_url: imageUrl,
           analysis_result: analysis,
           comparison_summary: comparisonText
         }
@@ -140,8 +196,8 @@ const PhotoJournal = () => {
         });
       } else {
         toast({
-          title: "Analisis Selesai!",
-          description: "Foto Anda telah dianalisis dan disimpan.",
+          title: "Berhasil!",
+          description: "Foto progress Anda telah dianalisis dan disimpan.",
         });
         loadJournals();
       }
@@ -154,6 +210,7 @@ const PhotoJournal = () => {
       });
     } finally {
       setAnalyzing(false);
+      setUploading(false);
     }
   };
 
@@ -161,13 +218,15 @@ const PhotoJournal = () => {
     return null;
   }
 
+  const isProcessing = uploading || analyzing;
+
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
       <div className="container mx-auto px-4 pt-24 pb-12">
         <div className="max-w-4xl mx-auto space-y-8">
           <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               My Skin Progress
             </h1>
             <p className="text-muted-foreground">
@@ -184,21 +243,28 @@ const PhotoJournal = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {analyzing ? (
+              {isProcessing ? (
                 <div className="flex flex-col items-center justify-center py-12 space-y-4">
                   <Loader2 className="h-12 w-12 text-primary animate-spin" />
-                  <p className="text-muted-foreground">Menganalisis progress kulit Anda...</p>
+                  <p className="text-muted-foreground">
+                    {uploading ? 'Mengupload foto...' : 'Menganalisis progress kulit Anda...'}
+                  </p>
+                  {analyzing && (
+                    <p className="text-sm text-muted-foreground">Ini mungkin memakan waktu beberapa saat</p>
+                  )}
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="w-full sm:flex-1">
-                    <Camera className="h-5 w-5" />
-                    <span>Buka Kamera</span>
-                  </Button>
-                  <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg" className="w-full sm:flex-1">
-                    <Upload className="h-5 w-5" />
-                    <span>Upload Foto</span>
-                  </Button>
+                <>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="w-full sm:flex-1">
+                      <Camera className="h-5 w-5" />
+                      <span>Buka Kamera</span>
+                    </Button>
+                    <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg" className="w-full sm:flex-1">
+                      <Upload className="h-5 w-5" />
+                      <span>Upload Foto</span>
+                    </Button>
+                  </div>
                   <input
                     ref={cameraInputRef}
                     type="file"
@@ -214,7 +280,7 @@ const PhotoJournal = () => {
                     onChange={handleFileUpload}
                     className="hidden"
                   />
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -226,33 +292,52 @@ const PhotoJournal = () => {
               Your Progress History
             </h2>
             
-            {journals.length === 0 ? (
+            {loadingJournals ? (
               <Card className="shadow-soft">
                 <CardContent className="py-12 text-center">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin mx-auto mb-4" />
+                  <p className="text-muted-foreground">Memuat foto progress...</p>
+                </CardContent>
+              </Card>
+            ) : journals.length === 0 ? (
+              <Card className="shadow-soft">
+                <CardContent className="py-12 text-center">
+                  <ImageIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
                   <p className="text-muted-foreground">
-                    No progress photos yet. Start tracking your skin journey today!
+                    Belum ada foto progress. Mulai tracking perjalanan kulit Anda hari ini!
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {journals.map((journal) => (
-                  <Card key={journal.id} className="shadow-soft">
-                    <CardHeader>
+                  <Card key={journal.id} className="shadow-soft overflow-hidden">
+                    <CardHeader className="pb-2">
                       <CardTitle className="text-lg">
-                        {new Date(journal.created_at).toLocaleDateString('en-US', {
-                          month: 'long',
+                        {new Date(journal.created_at).toLocaleDateString('id-ID', {
                           day: 'numeric',
+                          month: 'long',
                           year: 'numeric'
                         })}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <img
-                        src={journal.image_url}
-                        alt="Progress photo"
-                        className="w-full rounded-lg"
-                      />
+                      <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                        <img
+                          src={journal.image_url}
+                          alt="Progress photo"
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                            target.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+                            const placeholder = document.createElement('div');
+                            placeholder.innerHTML = '<span class="text-muted-foreground text-sm">Gambar tidak tersedia</span>';
+                            target.parentElement?.appendChild(placeholder);
+                          }}
+                        />
+                      </div>
                       {journal.comparison_summary && (
                         <div className="p-4 rounded-lg bg-muted">
                           <p className="text-sm">{journal.comparison_summary}</p>
