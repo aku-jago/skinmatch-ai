@@ -1,9 +1,50 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+// Fallback recommendations based on skin type
+const getFallbackRecommendations = (skinType: string, products: any[]) => {
+  const skinTypeMap: Record<string, string[]> = {
+    oily: ['oily', 'acne-prone', 'all'],
+    dry: ['dry', 'sensitive', 'all'],
+    combination: ['combination', 'normal', 'all'],
+    normal: ['normal', 'all'],
+    sensitive: ['sensitive', 'dry', 'all'],
+    'acne-prone': ['acne-prone', 'oily', 'all']
+  };
+
+  const compatibleTypes = skinTypeMap[skinType.toLowerCase()] || ['all', 'normal'];
+  
+  // Filter and score products
+  const scoredProducts = products.map(product => {
+    let score = product.rating || 3;
+    
+    // Bonus for compatible skin types
+    if (product.skin_types?.some((t: string) => compatibleTypes.includes(t.toLowerCase()))) {
+      score += 2;
+    }
+    
+    // Bonus for higher ratings
+    if (product.rating >= 4.5) score += 1;
+    
+    return { ...product, score };
+  });
+
+  // Sort by score and take top 6
+  const topProducts = scoredProducts
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
+
+  return topProducts.map(product => ({
+    product_id: product.id,
+    reason: `Cocok untuk kulit ${skinType} dengan rating ${product.rating?.toFixed(1) || 'N/A'}`,
+    confidence_score: Math.min(product.score / 6, 1) * 5
+  }));
 };
 
 serve(async (req) => {
@@ -37,7 +78,7 @@ serve(async (req) => {
       .from("profiles")
       .select("skin_type, preferences")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     // Get latest skin analysis
     const { data: latestAnalysis } = await supabaseClient
@@ -48,7 +89,7 @@ serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    // Get all 50 products
+    // Get all products (up to 50)
     const { data: products } = await supabaseClient
       .from("products")
       .select("*")
@@ -71,8 +112,13 @@ serve(async (req) => {
     console.log("User skin type:", skinType);
     console.log("User concerns:", concerns);
 
-    // Prepare AI prompt
-    const systemPrompt = `Anda adalah ahli dermatologi dan skincare yang berpengalaman. Tugas Anda adalah merekomendasikan produk skincare yang paling sesuai untuk user berdasarkan:
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    
+    let recommendations: any[] = [];
+    
+    if (LOVABLE_API_KEY) {
+      // Prepare AI prompt
+      const systemPrompt = `Anda adalah ahli dermatologi dan skincare yang berpengalaman. Tugas Anda adalah merekomendasikan produk skincare yang paling sesuai untuk user berdasarkan:
 1. Tipe kulit user
 2. Masalah kulit yang terdeteksi (skin concerns)
 3. Ingredients yang cocok dan aman untuk tipe kulit tersebut
@@ -90,17 +136,18 @@ Berikan rekomendasi dalam format JSON berikut:
     {
       "product_id": "uuid",
       "reason": "Penjelasan singkat mengapa produk ini cocok (max 150 karakter)",
-      "confidence_score": 0.0-5.0,
-      "benefits": ["benefit1", "benefit2"],
-      "key_ingredients": ["ingredient1", "ingredient2"]
+      "confidence_score": 0.0-5.0
     }
   ]
 }
 
-Rekomendasikan 6 produk terbaik, urutkan dari yang paling cocok.`;
+PENTING: 
+- product_id HARUS berupa UUID yang valid dari daftar produk yang diberikan
+- Rekomendasikan TEPAT 6 produk terbaik
+- Urutkan dari yang paling cocok`;
 
-    const userPrompt = `Tipe kulit: ${skinType}
-Masalah kulit: ${concerns.length > 0 ? concerns.join(", ") : "Tidak ada masalah spesifik"}
+      const userPrompt = `Tipe kulit: ${skinType}
+Masalah kulit: ${Array.isArray(concerns) && concerns.length > 0 ? concerns.join(", ") : "Tidak ada masalah spesifik"}
 Detail analisis kulit: ${analysisDetails}
 
 Daftar produk yang tersedia (${products.length} produk):
@@ -109,7 +156,6 @@ ${i + 1}. ID: ${p.id}
    Nama: ${p.name}
    Brand: ${p.brand}
    Kategori: ${p.category}
-   Harga: Rp ${p.price.toLocaleString("id-ID")}
    Rating: ${p.rating || "N/A"}/5
    Deskripsi: ${p.description || "N/A"}
    Ingredients: ${p.ingredients || "N/A"}
@@ -120,72 +166,78 @@ ${i + 1}. ID: ${p.id}
 
 Tolong rekomendasikan 6 produk terbaik untuk user ini dengan analisis mendalam.`;
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+      console.log("Calling Lovable AI for product recommendations...");
 
-    console.log("Calling Lovable AI for product recommendations...");
+      try {
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            response_format: { type: "json_object" }
+          }),
+        });
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.7,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        if (!aiResponse.ok) {
+          console.error("AI response not ok:", aiResponse.status);
+          if (aiResponse.status === 429 || aiResponse.status === 402) {
+            console.log("Rate limit or payment required, using fallback");
+            recommendations = getFallbackRecommendations(skinType, products);
+          } else {
+            throw new Error("AI gateway error");
           }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Payment required. Please add credits to your workspace." }),
-          {
-            status: 402,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
+        } else {
+          const aiData = await aiResponse.json();
+          const aiContent = aiData.choices[0].message.content;
+          console.log("AI response received:", aiContent);
+
+          const parsedRecommendations = JSON.parse(aiContent);
+
+          if (parsedRecommendations.recommendations && parsedRecommendations.recommendations.length > 0) {
+            // Validate product IDs exist
+            const validProductIds = new Set(products.map(p => p.id));
+            recommendations = parsedRecommendations.recommendations
+              .filter((rec: any) => validProductIds.has(rec.product_id))
+              .slice(0, 6);
+            
+            if (recommendations.length < 3) {
+              console.log("Not enough valid recommendations from AI, using fallback");
+              recommendations = getFallbackRecommendations(skinType, products);
+            }
+          } else {
+            console.log("No recommendations from AI, using fallback");
+            recommendations = getFallbackRecommendations(skinType, products);
           }
-        );
+        }
+      } catch (aiError) {
+        console.error("AI error:", aiError);
+        recommendations = getFallbackRecommendations(skinType, products);
       }
-      const errorText = await aiResponse.text();
-      console.error("AI gateway error:", aiResponse.status, errorText);
-      throw new Error("AI gateway error");
-    }
-
-    const aiData = await aiResponse.json();
-    const aiContent = aiData.choices[0].message.content;
-    console.log("AI response received:", aiContent);
-
-    const parsedRecommendations = JSON.parse(aiContent);
-
-    if (!parsedRecommendations.recommendations || parsedRecommendations.recommendations.length === 0) {
-      throw new Error("No recommendations generated by AI");
+    } else {
+      console.log("No LOVABLE_API_KEY, using fallback recommendations");
+      recommendations = getFallbackRecommendations(skinType, products);
     }
 
     // Delete existing recommendations
-    await supabaseClient
+    const { error: deleteError } = await supabaseClient
       .from("product_recommendations")
       .delete()
       .eq("user_id", user.id);
 
-    // Insert new AI-powered recommendations
-    const recommendationsToInsert = parsedRecommendations.recommendations.map((rec: any) => ({
+    if (deleteError) {
+      console.error("Delete error:", deleteError);
+      // Continue anyway - maybe there were no existing recommendations
+    }
+
+    // Insert new recommendations
+    const recommendationsToInsert = recommendations.map((rec: any) => ({
       user_id: user.id,
       product_id: rec.product_id,
       reason: rec.reason,
@@ -201,13 +253,13 @@ Tolong rekomendasikan 6 produk terbaik untuk user ini dengan analisis mendalam.`
       throw insertError;
     }
 
-    console.log(`Successfully generated ${recommendationsToInsert.length} AI-powered recommendations`);
+    console.log(`Successfully generated ${recommendationsToInsert.length} recommendations`);
 
     return new Response(
       JSON.stringify({
         success: true,
         count: recommendationsToInsert.length,
-        recommendations: parsedRecommendations.recommendations,
+        recommendations: recommendations,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

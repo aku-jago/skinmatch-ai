@@ -22,14 +22,23 @@ serve(async (req) => {
     const systemPrompt = `Anda adalah AI dermatologist expert. Analisis foto wajah yang dikirimkan dan berikan:
 1. Jenis kulit (oily, dry, combination, normal, sensitive, acne-prone)
 2. Masalah kulit yang terdeteksi (redness, enlarged pores, acne, dark spots, fine lines, dll)
-3. Confidence score (0.0-1.0)
-4. Rekomendasi perawatan yang detail dan personal
+3. Skin health score (0-100, dimana 100 adalah kulit sempurna)
+4. Confidence score (0.0-1.0)
+5. Rekomendasi perawatan yang detail dan personal
+
+PENTING: skin_health_score harus berupa angka 0-100. Hitung berdasarkan:
+- Kulit sempurna tanpa masalah = 90-100
+- Masalah minor (1-2 issues) = 70-89
+- Masalah sedang (3-4 issues) = 50-69
+- Masalah banyak (5+ issues) = 30-49
+- Kondisi parah = 0-29
 
 Format response dalam JSON:
 {
   "skin_type": "jenis kulit",
   "detected_issues": ["masalah1", "masalah2"],
-  "confidence_score": 0.xx,
+  "skin_health_score": 75,
+  "confidence_score": 0.85,
   "detailed_analysis": "analisis lengkap dalam bahasa Indonesia",
   "recommendations": "rekomendasi perawatan lengkap"
 }`;
@@ -49,7 +58,7 @@ Format response dalam JSON:
           { 
             role: 'user', 
             content: [
-              { type: 'text', text: 'Analisis foto kulit wajah ini secara detail.' },
+              { type: 'text', text: 'Analisis foto kulit wajah ini secara detail. Berikan skin_health_score dalam rentang 0-100.' },
               { 
                 type: 'image_url', 
                 image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
@@ -87,9 +96,37 @@ Format response dalam JSON:
     let analysis;
     try {
       analysis = JSON.parse(analysisText);
+      
+      // Validate and ensure skin_health_score exists (0-100)
+      if (typeof analysis.skin_health_score !== 'number' || analysis.skin_health_score < 0 || analysis.skin_health_score > 100) {
+        // Calculate fallback score based on detected issues
+        const issuesCount = Array.isArray(analysis.detected_issues) ? analysis.detected_issues.length : 0;
+        const baseScore = 85;
+        analysis.skin_health_score = Math.max(20, baseScore - (issuesCount * 10));
+        console.log('Calculated fallback skin_health_score:', analysis.skin_health_score);
+      }
+      
+      // Ensure confidence_score is valid (0.0-1.0)
+      if (typeof analysis.confidence_score !== 'number' || analysis.confidence_score < 0 || analysis.confidence_score > 1) {
+        analysis.confidence_score = 0.75; // Default confidence
+      }
+      
+      // Ensure detected_issues is an array
+      if (!Array.isArray(analysis.detected_issues)) {
+        analysis.detected_issues = [];
+      }
+      
     } catch (e) {
       console.error('Failed to parse AI response:', e);
-      throw new Error('Failed to parse AI response');
+      // Return fallback analysis instead of throwing error
+      analysis = {
+        skin_type: "normal",
+        detected_issues: [],
+        skin_health_score: 70,
+        confidence_score: 0.5,
+        detailed_analysis: "Maaf, analisis gambar tidak dapat diproses dengan sempurna. Silakan coba lagi dengan foto yang lebih jelas.",
+        recommendations: "Untuk hasil terbaik, pastikan foto diambil dalam pencahayaan yang baik dan wajah terlihat jelas."
+      };
     }
 
     return new Response(JSON.stringify({ analysis }), {
