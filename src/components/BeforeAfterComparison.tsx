@@ -96,7 +96,16 @@ export default function BeforeAfterComparison() {
     ];
 
     metricDefinitions.forEach(({ key, label, inverse }) => {
-      const improvementValue = improvements[key] || 0;
+      const rawEntry = (improvements as any)[key];
+      // Support both numeric values and objects like { detail, status, percentage }
+      const improvementValue = typeof rawEntry === 'object' && rawEntry !== null
+        ? typeof rawEntry.percentage === 'number'
+          ? rawEntry.percentage
+          : 0
+        : typeof rawEntry === 'number'
+          ? rawEntry
+          : 0;
+
       if (improvementValue !== 0 || key === 'overall') {
         const normalizedValue = inverse ? -improvementValue : improvementValue;
         metrics.push({
