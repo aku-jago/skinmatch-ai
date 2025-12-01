@@ -171,8 +171,12 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
       false;
 
     // Get detected issues from AI analysis
-    const detectedIssues = Array.isArray(analysis?.detected_issues) 
-      ? (analysis.detected_issues as string[]) 
+    const detectedIssues = Array.isArray(analysis?.detected_issues)
+      ? (analysis.detected_issues as any[]).map((issue) =>
+          typeof issue === 'string'
+            ? issue
+            : issue?.detail || issue?.name || issue?.status || 'Tidak diketahui'
+        )
       : [];
 
     // Get recommendations from AI analysis
