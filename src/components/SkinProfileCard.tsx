@@ -24,6 +24,7 @@ interface SkinAnalysisResult {
   skin_type: string;
   confidence_score: number | null;
   detected_issues: unknown;
+  recommendations: string | null;
   created_at: string;
 }
 
@@ -36,6 +37,7 @@ interface CombinedSkinProfile {
     aiAnalysis: boolean;
   };
   detectedIssues: string[];
+  recommendations: string | null;
   lastUpdated: string;
 }
 
@@ -70,7 +72,7 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
       // Fetch latest AI skin analysis
       const { data: analysisData } = await supabase
         .from('skin_analyses')
-        .select('skin_type, confidence_score, detected_issues, created_at')
+        .select('skin_type, confidence_score, detected_issues, recommendations, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -173,6 +175,9 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
       ? (analysis.detected_issues as string[]) 
       : [];
 
+    // Get recommendations from AI analysis
+    const recommendations = analysis?.recommendations || null;
+
     // Get the most recent update date
     const dates = [
       questionnaire?.updated_at,
@@ -189,6 +194,7 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
         aiAnalysis: !!analysis,
       },
       detectedIssues,
+      recommendations,
       lastUpdated,
     };
   };
@@ -388,6 +394,19 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
                   </Badge>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* AI Recommendations */}
+          {combinedProfile.recommendations && (
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                Rekomendasi AI
+              </p>
+              <p className="text-sm whitespace-pre-line leading-relaxed text-foreground/90">
+                {combinedProfile.recommendations}
+              </p>
             </div>
           )}
           
