@@ -65,6 +65,9 @@ serve(async (req) => {
       );
     }
 
+    // Extract the token from the Authorization header
+    const token = authHeader.replace('Bearer ', '');
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_ANON_KEY") ?? "",
@@ -75,14 +78,17 @@ serve(async (req) => {
       }
     );
 
-    const {
-      data: { user },
-    } = await supabaseClient.auth.getUser();
+    // Use getUser with the token explicitly
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token);
+
+    if (userError) {
+      console.log('Auth error:', userError.message);
+    }
 
     if (!user) {
-      console.log('User not authenticated');
+      console.log('User not authenticated - token might be invalid or expired');
       return new Response(
-        JSON.stringify({ error: "User tidak terautentikasi", recommendations: [] }),
+        JSON.stringify({ error: "Sesi tidak valid. Silakan login ulang.", recommendations: [] }),
         {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },

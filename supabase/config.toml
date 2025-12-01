@@ -13,10 +13,10 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.generate-personalized-routine]
-verify_jwt = false
+verify_jwt = true
 
 [functions.check-routine-reminders]
 verify_jwt = false
 
 [functions.generate-product-recommendations]
-verify_jwt = false
+verify_jwt = true
