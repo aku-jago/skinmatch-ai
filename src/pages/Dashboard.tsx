@@ -16,7 +16,6 @@ const Dashboard = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<any>(null);
-  const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -33,16 +32,6 @@ const Dashboard = () => {
         .eq('id', user.id)
         .single()
         .then(({ data }) => setProfile(data));
-
-      // Fetch latest analysis
-      supabase
-        .from('skin_analyses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-        .then(({ data }) => setLatestAnalysis(data));
     }
   }, [user]);
 
@@ -65,7 +54,7 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Skin Profile Card - Questionnaire Prompt */}
+          {/* Unified Skin Profile Card - Combined Questionnaire + AI Analysis */}
           <SkinProfileCard onQuizComplete={() => {
             // Refresh profile data after quiz completion
             supabase
@@ -75,58 +64,6 @@ const Dashboard = () => {
               .single()
               .then(({ data }) => setProfile(data));
           }} />
-
-          {/* Latest Skin Analysis - Cleaned Up */}
-          {latestAnalysis && (
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Latest Skin Analysis
-                </CardTitle>
-                <CardDescription>
-                  {new Date(latestAnalysis.created_at).toLocaleDateString('id-ID', {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric'
-                  })}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-lg bg-gradient-card">
-                    <p className="text-sm text-muted-foreground mb-1">Jenis Kulit</p>
-                    <p className="text-2xl font-bold text-primary capitalize">{latestAnalysis.skin_type}</p>
-                    {latestAnalysis.confidence_score && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Confidence: {(latestAnalysis.confidence_score * 100).toFixed(0)}%
-                      </p>
-                    )}
-                  </div>
-                  
-                  {latestAnalysis.detected_issues && latestAnalysis.detected_issues.length > 0 && (
-                    <div className="p-4 rounded-lg bg-muted/50">
-                      <p className="text-sm text-muted-foreground mb-2">Masalah Terdeteksi</p>
-                      <div className="flex flex-wrap gap-2">
-                        {latestAnalysis.detected_issues.slice(0, 3).map((issue: string, idx: number) => (
-                          <span key={idx} className="px-2 py-1 bg-accent/20 text-accent rounded text-xs">
-                            {issue}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {latestAnalysis.recommendations && (
-                  <div className="mt-4 p-3 rounded-lg bg-primary/5">
-                    <p className="text-xs text-muted-foreground mb-1">Rekomendasi Singkat</p>
-                    <p className="text-sm whitespace-pre-line leading-relaxed">{latestAnalysis.recommendations}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
 
           {/* Skin Health Analytics Section */}
           <div className="mb-8">
