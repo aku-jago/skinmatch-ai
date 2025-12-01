@@ -64,6 +64,19 @@ export default function ProductRecommendations() {
   const generateRecommendations = async () => {
     setGenerating(true);
     try {
+      // Get the current session for authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      
+      if (!accessToken) {
+        toast({
+          title: 'Login diperlukan',
+          description: 'Silakan login terlebih dahulu untuk mendapatkan rekomendasi.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       toast({
         title: 'Menganalisis...',
         description: 'AI sedang menganalisis kulit Anda untuk rekomendasi terbaik.',
@@ -71,13 +84,16 @@ export default function ProductRecommendations() {
 
       const { data, error } = await supabase.functions.invoke('generate-product-recommendations', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function invoke error:', error);
+        throw error;
+      }
 
-      if (data.error) {
+      if (data.error && !data.recommendations) {
         toast({
           title: 'Gagal membuat rekomendasi',
           description: data.error,
@@ -88,7 +104,7 @@ export default function ProductRecommendations() {
 
       toast({
         title: 'Rekomendasi berhasil dibuat!',
-        description: `${data.count} produk direkomendasikan oleh AI berdasarkan analisis kulit Anda.`,
+        description: `${data.count || data.recommendations?.length || 0} produk direkomendasikan oleh AI berdasarkan analisis kulit Anda.`,
       });
 
       await loadRecommendations();
@@ -96,7 +112,7 @@ export default function ProductRecommendations() {
       console.error('Error generating recommendations:', error);
       toast({
         title: 'Gagal membuat rekomendasi',
-        description: 'Terjadi kesalahan saat membuat rekomendasi produk.',
+        description: 'Terjadi kesalahan saat membuat rekomendasi produk. Pastikan Anda sudah login.',
         variant: 'destructive'
       });
     } finally {

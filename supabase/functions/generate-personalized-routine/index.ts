@@ -114,7 +114,12 @@ serve(async (req) => {
   try {
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      throw new Error('No authorization header');
+      console.log('No authorization header, returning default routine');
+      const defaultRoutine = getDefaultRoutine('normal');
+      return new Response(
+        JSON.stringify({ routine: defaultRoutine, isDefault: true, error: 'Silakan login terlebih dahulu' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const supabaseClient = createClient(
@@ -125,7 +130,12 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
-      throw new Error('User not authenticated');
+      console.log('User not authenticated, returning default routine');
+      const defaultRoutine = getDefaultRoutine('normal');
+      return new Response(
+        JSON.stringify({ routine: defaultRoutine, isDefault: true, error: 'User tidak terautentikasi' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');

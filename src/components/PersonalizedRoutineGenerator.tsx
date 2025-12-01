@@ -45,18 +45,32 @@ export function PersonalizedRoutineGenerator({ onRoutineSaved }: { onRoutineSave
   const handleGenerate = async () => {
     setSaving(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-personalized-routine');
+      // Get the current session for authentication
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      
+      if (!accessToken) {
+        throw new Error("Silakan login terlebih dahulu");
+      }
+
+      const { data, error } = await supabase.functions.invoke('generate-personalized-routine', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       if (error) throw error;
 
-      if (data.error) {
+      if (data.error && !data.routine) {
         throw new Error(data.error);
       }
 
       setGeneratedRoutine(data.routine);
       toast({
         title: "Routine Generated! ✨",
-        description: "Your personalized skincare routine is ready.",
+        description: data.isDefault 
+          ? "Rutinitas default berdasarkan tipe kulit Anda."
+          : "Your personalized skincare routine is ready.",
       });
     } catch (error: any) {
       console.error('Error generating routine:', error);
