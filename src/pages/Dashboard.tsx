@@ -10,6 +10,7 @@ import SkinHealthAnalytics from '@/components/SkinHealthAnalytics';
 import StreakTracker from '@/components/StreakTracker';
 import ProductRecommendations from '@/components/ProductRecommendations';
 import BeforeAfterComparison from '@/components/BeforeAfterComparison';
+import SkinProfileCard from '@/components/SkinProfileCard';
 
 const Dashboard = () => {
   const { user, loading } = useAuth();
@@ -63,6 +64,17 @@ const Dashboard = () => {
               Your personalized skincare journey continues
             </p>
           </div>
+
+          {/* Skin Profile Card - Questionnaire Prompt */}
+          <SkinProfileCard onQuizComplete={() => {
+            // Refresh profile data after quiz completion
+            supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', user.id)
+              .single()
+              .then(({ data }) => setProfile(data));
+          }} />
 
           {/* Latest Skin Analysis - Cleaned Up */}
           {latestAnalysis && (

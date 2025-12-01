@@ -485,6 +485,39 @@ export type Database = {
           },
         ]
       }
+      skin_questionnaires: {
+        Row: {
+          answers: Json
+          confidence_score: number | null
+          created_at: string
+          id: string
+          is_sensitive: boolean
+          skin_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_sensitive?: boolean
+          skin_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          is_sensitive?: boolean
+          skin_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       skincare_routines: {
         Row: {
           created_at: string

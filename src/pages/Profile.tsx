@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { User, Calendar, Mail } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import SkinProfileCard from '@/components/SkinProfileCard';
 
 const Profile = () => {
   const { user, loading } = useAuth();
@@ -101,6 +102,9 @@ const Profile = () => {
             </p>
           </div>
 
+          {/* Skin Profile Card */}
+          <SkinProfileCard onQuizComplete={loadProfile} />
+
           <Card className="shadow-soft">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -166,14 +170,6 @@ const Profile = () => {
                 />
               </div>
 
-              {profile?.skin_type && (
-                <div className="p-4 rounded-lg bg-gradient-card border border-primary/20">
-                  <p className="text-sm text-muted-foreground mb-1">Current Skin Type</p>
-                  <p className="text-lg font-semibold capitalize text-primary">
-                    {profile.skin_type}
-                  </p>
-                </div>
-              )}
 
               <Button onClick={handleSave} disabled={saving} className="w-full">
                 {saving ? 'Saving...' : 'Save Changes'}
