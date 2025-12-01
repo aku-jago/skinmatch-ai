@@ -182,13 +182,13 @@ const ProductScan = () => {
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-3">
-                    <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="flex-1">
-                      <Camera className="h-5 w-5 mr-2" />
-                      Open Camera
+                    <Button onClick={() => cameraInputRef.current?.click()} variant="hero" size="lg" className="w-full sm:flex-1">
+                      <Camera className="h-5 w-5" />
+                      <span>Buka Kamera</span>
                     </Button>
-                    <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg" className="flex-1">
-                      <Upload className="h-5 w-5 mr-2" />
-                      Upload Photo
+                    <Button onClick={() => fileInputRef.current?.click()} variant="outline" size="lg" className="w-full sm:flex-1">
+                      <Upload className="h-5 w-5" />
+                      <span>Upload Foto</span>
                     </Button>
                   </div>
                   <input
