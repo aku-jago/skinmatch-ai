@@ -56,22 +56,56 @@ const SkinScan = () => {
     }
   };
 
-  const analyzeSkin = async (imageFile: Blob, imageUrl: string) => {
+  const uploadToStorage = async (file: Blob, userId: string): Promise<string> => {
+    const fileExt = 'jpg';
+    const fileName = `${userId}/skin-${Date.now()}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('skin-progress')
+      .upload(fileName, file, {
+        contentType: 'image/jpeg',
+        upsert: false
+      });
+
+    if (error) {
+      console.error('Storage upload error:', error);
+      throw new Error('Gagal mengupload gambar ke storage');
+    }
+
+    const { data: urlData } = supabase.storage
+      .from('skin-progress')
+      .getPublicUrl(data.path);
+
+    return urlData.publicUrl;
+  };
+
+  const analyzeSkin = async (imageFile: Blob, previewUrl: string) => {
     setScanning(true);
     setResult(null);
+    setCapturedImage(previewUrl);
 
     try {
-      // Compress image first (fallback to original if compression fails or format unsupported)
-      let blobToEncode: Blob = imageFile;
+      // Compress image first
+      let compressedBlob: Blob = imageFile;
       try {
-        blobToEncode = await compressImage(imageFile);
+        compressedBlob = await compressImage(imageFile, 0.5);
+        console.log('Image compressed to:', (compressedBlob.size / 1024).toFixed(2), 'KB');
       } catch (e) {
         console.warn('Compression failed, using original image:', e);
       }
+
+      // Upload to Supabase Storage
+      toast({
+        title: 'Mengupload foto...',
+        description: 'Mohon tunggu sebentar',
+      });
       
-      // Convert compressed blob to base64
+      const storageUrl = await uploadToStorage(compressedBlob, user!.id);
+      console.log('Image uploaded to:', storageUrl);
+      
+      // Convert compressed blob to base64 for AI analysis
       const reader = new FileReader();
-      reader.readAsDataURL(blobToEncode);
+      reader.readAsDataURL(compressedBlob);
       
       const base64Promise = new Promise<string>((resolve) => {
         reader.onloadend = () => {
@@ -81,6 +115,11 @@ const SkinScan = () => {
       });
 
       const imageBase64 = await base64Promise;
+
+      toast({
+        title: 'Menganalisis kulit...',
+        description: 'AI sedang menganalisis foto Anda',
+      });
 
       // Call AI edge function
       const { data, error: functionError } = await supabase.functions.invoke('analyze-skin-image', {
@@ -103,7 +142,7 @@ const SkinScan = () => {
         detected_issues: analysis.detected_issues,
         recommendations: analysis.recommendations,
         detailed_analysis: analysis.detailed_analysis,
-        image_url: imageUrl
+        image_url: storageUrl // Use storage URL instead of base64
       };
 
       setResult(scanResult);
