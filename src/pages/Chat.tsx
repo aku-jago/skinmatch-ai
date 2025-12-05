@@ -168,21 +168,21 @@ const Chat = () => {
           <div className="max-w-2xl mx-auto px-3 lg:px-4 py-4">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-[60vh] text-center px-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-4">
-                  <Sparkles className="h-8 w-8 text-primary" />
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center mb-3">
+                  <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <h2 className="text-lg font-semibold text-foreground mb-1">
+                <h2 className="text-sm font-semibold text-foreground mb-0.5">
                   AI Skincare Assistant
                 </h2>
-                <p className="text-sm text-muted-foreground max-w-xs">
+                <p className="text-xs text-muted-foreground max-w-xs">
                   Tanyakan apapun tentang skincare, jenis kulit, atau rekomendasi produk
                 </p>
-                <div className="flex flex-wrap gap-2 mt-6 justify-center">
+                <div className="flex flex-wrap gap-1.5 mt-4 justify-center">
                   {['Routine pagi', 'Kulit berminyak', 'Anti aging'].map((suggestion) => (
                     <button
                       key={suggestion}
                       onClick={() => setInput(suggestion)}
-                      className="px-3 py-1.5 text-xs rounded-full bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
+                      className="px-2.5 py-1 text-[10px] rounded-full bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
                     >
                       {suggestion}
                     </button>
@@ -190,34 +190,34 @@ const Chat = () => {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {messages.map((message) => (
                   <div
                     key={message.id}
                     className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-in fade-in-50 duration-200`}
                   >
                     {message.role === 'assistant' && (
-                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mr-2 mt-0.5">
-                        <Bot className="h-4 w-4 text-primary" />
+                      <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mr-1.5 mt-0.5">
+                        <Bot className="h-3 w-3 text-primary" />
                       </div>
                     )}
                     <div
-                      className={`rounded-2xl px-3.5 py-2.5 max-w-[85%] lg:max-w-[75%] ${
+                      className={`rounded-2xl px-3 py-2 max-w-[85%] lg:max-w-[75%] ${
                         message.role === 'user'
                           ? 'bg-primary text-primary-foreground rounded-br-md'
                           : 'bg-muted/60 text-foreground rounded-bl-md'
                       }`}
                     >
-                      <div className="text-[13px] lg:text-sm leading-relaxed whitespace-pre-wrap">
+                      <div className="text-[11px] lg:text-xs leading-relaxed whitespace-pre-wrap">
                         {message.content.split('\n').map((line, idx) => {
                           if (line.trim().startsWith('•') || line.trim().match(/^\d+\./)) {
                             return <div key={idx} className="my-0.5 pl-1">{line}</div>;
                           }
                           if (line.trim().startsWith('#')) {
-                            return <div key={idx} className="font-medium mt-2 mb-0.5">{line.replace(/^#+\s*/, '')}</div>;
+                            return <div key={idx} className="font-medium mt-1.5 mb-0.5">{line.replace(/^#+\s*/, '')}</div>;
                           }
                           if (line.trim() === '') {
-                            return <div key={idx} className="h-1.5" />;
+                            return <div key={idx} className="h-1" />;
                           }
                           return <span key={idx}>{line}</span>;
                         })}
@@ -227,14 +227,14 @@ const Chat = () => {
                 ))}
                 {sending && (
                   <div className="flex justify-start animate-in fade-in-50">
-                    <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mr-2">
-                      <Bot className="h-4 w-4 text-primary" />
+                    <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mr-1.5">
+                      <Bot className="h-3 w-3 text-primary" />
                     </div>
-                    <div className="bg-muted/60 rounded-2xl rounded-bl-md px-4 py-3">
-                      <div className="flex gap-1">
-                        <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <span className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="bg-muted/60 rounded-2xl rounded-bl-md px-3 py-2">
+                      <div className="flex gap-0.5">
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                     </div>
                   </div>
@@ -247,7 +247,7 @@ const Chat = () => {
 
         {/* Input Area - Fixed at bottom */}
         <div className="sticky bottom-16 lg:bottom-0 bg-background/95 backdrop-blur-sm border-t border-border/50">
-          <div className="max-w-2xl mx-auto px-3 lg:px-4 py-3">
+          <div className="max-w-2xl mx-auto px-3 lg:px-4 py-2">
             <div className="flex gap-2 items-center">
               <Input
                 value={input}
@@ -255,15 +255,15 @@ const Chat = () => {
                 onKeyPress={(e) => e.key === 'Enter' && !sending && handleSend()}
                 placeholder="Ketik pesan..."
                 disabled={sending}
-                className="flex-1 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 px-4 h-11"
+                className="flex-1 rounded-full bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-primary/50 px-3 h-9 text-xs"
               />
               <Button 
                 onClick={handleSend} 
                 disabled={sending || !input.trim()}
                 size="icon"
-                className="rounded-full h-11 w-11 flex-shrink-0"
+                className="rounded-full h-9 w-9 flex-shrink-0"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3.5 w-3.5" />
               </Button>
             </div>
           </div>
