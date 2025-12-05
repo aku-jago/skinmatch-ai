@@ -134,120 +134,75 @@ export const Navigation = () => {
           )}
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile Navigation - Simplified since we have bottom nav */}
         <div className="lg:hidden flex items-center gap-2">
           {user ? (
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-2 mt-6">
-                  <Link to="/dashboard" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/dashboard') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <Home className="h-4 w-4" />
-                      Dashboard
-                    </Button>
-                  </Link>
-                  <Link to="/scan" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/scan') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <Camera className="h-4 w-4" />
-                      Skin Scan
-                    </Button>
-                  </Link>
-                  <Link to="/product-scan" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/product-scan') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <ShieldAlert className="h-4 w-4" />
-                      Product Scan
-                    </Button>
-                  </Link>
-                  <Link to="/shop" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/shop') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <ShoppingBag className="h-4 w-4" />
-                      Shop
-                    </Button>
-                  </Link>
-                  <Link to="/routine" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/routine') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <Calendar className="h-4 w-4" />
-                      Routine
-                    </Button>
-                  </Link>
-                  <Link to="/progress" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/progress') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <TrendingUp className="h-4 w-4" />
-                      Progress
-                    </Button>
-                  </Link>
-                  <Link to="/chat" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/chat') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      AI Chat
-                    </Button>
-                  </Link>
-                  <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/settings') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Button>
-                  </Link>
-                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-                    <Button 
-                      variant={isActive('/profile') ? 'default' : 'ghost'} 
-                      className="w-full justify-start gap-3"
-                    >
-                      <User className="h-4 w-4" />
-                      Profile
-                    </Button>
-                  </Link>
-                  <div className="border-t pt-2 mt-2">
-                    <div className="px-3 py-2">
-                      <NotificationBell />
+            <>
+              <NotificationBell />
+              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="right" className="w-72">
+                  <SheetHeader>
+                    <SheetTitle>Menu Lainnya</SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-2 mt-6">
+                    <Link to="/product-scan" onClick={() => setMobileMenuOpen(false)}>
+                      <Button 
+                        variant={isActive('/product-scan') ? 'default' : 'ghost'} 
+                        className="w-full justify-start gap-3 h-12"
+                      >
+                        <ShieldAlert className="h-5 w-5" />
+                        Product Scan
+                      </Button>
+                    </Link>
+                    <Link to="/routine" onClick={() => setMobileMenuOpen(false)}>
+                      <Button 
+                        variant={isActive('/routine') ? 'default' : 'ghost'} 
+                        className="w-full justify-start gap-3 h-12"
+                      >
+                        <Calendar className="h-5 w-5" />
+                        Routine
+                      </Button>
+                    </Link>
+                    <Link to="/progress" onClick={() => setMobileMenuOpen(false)}>
+                      <Button 
+                        variant={isActive('/progress') ? 'default' : 'ghost'} 
+                        className="w-full justify-start gap-3 h-12"
+                      >
+                        <TrendingUp className="h-5 w-5" />
+                        Progress
+                      </Button>
+                    </Link>
+                    <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
+                      <Button 
+                        variant={isActive('/settings') ? 'default' : 'ghost'} 
+                        className="w-full justify-start gap-3 h-12"
+                      >
+                        <Settings className="h-5 w-5" />
+                        Settings
+                      </Button>
+                    </Link>
+                    <div className="border-t pt-4 mt-4">
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start gap-3 h-12 text-destructive"
+                        onClick={() => {
+                          signOut();
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        <LogOut className="h-5 w-5" />
+                        Sign Out
+                      </Button>
                     </div>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 text-destructive"
-                    onClick={() => {
-                      signOut();
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    Sign Out
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            </>
           ) : (
             <>
               <Link to="/login">

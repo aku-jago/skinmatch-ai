@@ -161,18 +161,18 @@ const Chat = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
-      <div className="container mx-auto px-4 pt-24 pb-12">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+      <div className="container mx-auto px-4 pt-20 pb-24 lg:pb-12">
+        <div className="max-w-3xl mx-auto space-y-4 lg:space-y-6">
+          <div className="text-center space-y-1 lg:space-y-2">
+            <h1 className="text-2xl lg:text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               AI Skincare Consultant
             </h1>
-            <p className="text-muted-foreground">
-              Tanyakan apapun tentang skincare dan dapatkan saran personal
+            <p className="text-sm lg:text-base text-muted-foreground">
+              Tanyakan apapun tentang skincare
             </p>
           </div>
 
-          <Card className="shadow-soft h-[600px] flex flex-col">
+          <Card className="shadow-soft h-[calc(100dvh-220px)] lg:h-[600px] flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-primary" />
