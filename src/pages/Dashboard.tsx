@@ -79,10 +79,10 @@ const Dashboard = () => {
                 gradient="from-primary to-primary/70"
               />
               <QuickActionCard
-                icon={MessageSquare}
-                label="AI Chat"
-                description="Konsultasi"
-                path="/chat"
+                icon={Camera}
+                label="Progress"
+                description="Foto jurnal"
+                path="/progress"
                 gradient="from-accent to-accent/70"
               />
               <QuickActionCard
