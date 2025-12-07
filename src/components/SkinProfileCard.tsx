@@ -291,70 +291,70 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
   return (
     <>
       <Card className="shadow-soft bg-gradient-to-br from-green-50/50 to-emerald-50/50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200/50 dark:border-green-800/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
+        <CardHeader className="pb-2 pt-4 px-4">
+          <CardTitle className="flex items-center gap-1.5 text-sm">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
             Profil Kulit Anda
           </CardTitle>
-          <CardDescription>
-            Hasil gabungan dari {combinedProfile.sources.questionnaire ? 'kuesioner' : ''} 
+          <CardDescription className="text-xs">
+            Hasil {combinedProfile.sources.questionnaire ? 'kuesioner' : ''} 
             {combinedProfile.sources.questionnaire && combinedProfile.sources.aiAnalysis ? ' + ' : ''}
             {combinedProfile.sources.aiAnalysis ? 'AI scan' : ''}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-3 px-4 pb-4">
           {/* Main Result */}
-          <div className="flex items-center justify-between p-4 bg-background/80 rounded-lg">
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Jenis Kulit</p>
-              <p className="text-2xl font-bold text-primary capitalize">
+          <div className="flex items-center justify-between p-3 bg-background/80 rounded-lg">
+            <div className="space-y-0.5">
+              <p className="text-[10px] text-muted-foreground">Jenis Kulit</p>
+              <p className="text-lg font-bold text-primary capitalize">
                 {getSkinTypeDisplay(combinedProfile.skinType)}
               </p>
               {combinedProfile.isSensitive && (
-                <Badge variant="secondary" className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+                <Badge variant="secondary" className="bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300 text-[10px] px-1.5 py-0">
                   + Sensitif
                 </Badge>
               )}
             </div>
-            <div className="text-right space-y-1">
-              <p className="text-sm text-muted-foreground">Akurasi</p>
-              <p className={`text-2xl font-bold ${getConfidenceColor(combinedProfile.confidenceScore)}`}>
+            <div className="text-right space-y-0.5">
+              <p className="text-[10px] text-muted-foreground">Akurasi</p>
+              <p className={`text-lg font-bold ${getConfidenceColor(combinedProfile.confidenceScore)}`}>
                 {Math.round(combinedProfile.confidenceScore * 100)}%
               </p>
-              <p className={`text-xs ${getConfidenceColor(combinedProfile.confidenceScore)}`}>
+              <p className={`text-[10px] ${getConfidenceColor(combinedProfile.confidenceScore)}`}>
                 {getConfidenceLabel(combinedProfile.confidenceScore)}
               </p>
             </div>
           </div>
 
           {/* Data Sources */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <Badge 
               variant={combinedProfile.sources.questionnaire ? "default" : "outline"}
-              className={combinedProfile.sources.questionnaire ? "bg-primary/20 text-primary" : "opacity-50"}
+              className={`text-[10px] px-1.5 py-0 ${combinedProfile.sources.questionnaire ? "bg-primary/20 text-primary" : "opacity-50"}`}
             >
-              <ClipboardList className="h-3 w-3 mr-1" />
+              <ClipboardList className="h-2.5 w-2.5 mr-0.5" />
               Kuesioner {combinedProfile.sources.questionnaire ? '✓' : '✗'}
             </Badge>
             <Badge 
               variant={combinedProfile.sources.aiAnalysis ? "default" : "outline"}
-              className={combinedProfile.sources.aiAnalysis ? "bg-primary/20 text-primary" : "opacity-50"}
+              className={`text-[10px] px-1.5 py-0 ${combinedProfile.sources.aiAnalysis ? "bg-primary/20 text-primary" : "opacity-50"}`}
             >
-              <Camera className="h-3 w-3 mr-1" />
+              <Camera className="h-2.5 w-2.5 mr-0.5" />
               AI Scan {combinedProfile.sources.aiAnalysis ? '✓' : '✗'}
             </Badge>
           </div>
 
           {/* Missing source warning */}
           {missingSource && (
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/30">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
-                <div className="text-sm">
+            <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/30">
+              <div className="flex items-start gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5 text-amber-600 mt-0.5 shrink-0" />
+                <div className="text-xs">
                   <p className="font-medium text-amber-800 dark:text-amber-200">
-                    Tingkatkan akurasi hasil
+                    Tingkatkan akurasi
                   </p>
-                  <p className="text-amber-700 dark:text-amber-300 text-xs mt-1">
+                  <p className="text-amber-700 dark:text-amber-300 text-[10px] mt-0.5">
                     {!combinedProfile.sources.questionnaire && 'Lengkapi kuesioner untuk validasi lebih baik.'}
                     {!combinedProfile.sources.aiAnalysis && 'Lakukan AI skin scan untuk analisis visual.'}
                   </p>
@@ -363,7 +363,7 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
               <Button 
                 size="sm" 
                 variant="outline" 
-                className="mt-2 w-full border-amber-300 dark:border-amber-700"
+                className="mt-2 w-full border-amber-300 dark:border-amber-700 h-7 text-xs"
                 onClick={() => {
                   if (!combinedProfile.sources.questionnaire) {
                     setShowQuiz(true);
@@ -389,11 +389,11 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
 
           {/* Detected Issues */}
           {combinedProfile.detectedIssues.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Masalah Terdeteksi</p>
-              <div className="flex flex-wrap gap-2">
+            <div className="space-y-1.5">
+              <p className="text-[10px] text-muted-foreground">Masalah Terdeteksi</p>
+              <div className="flex flex-wrap gap-1">
                 {combinedProfile.detectedIssues.slice(0, 5).map((issue, idx) => (
-                  <Badge key={idx} variant="secondary" className="bg-accent/20 text-accent-foreground">
+                  <Badge key={idx} variant="secondary" className="bg-accent/20 text-accent-foreground text-[10px] px-1.5 py-0">
                     {issue}
                   </Badge>
                 ))}
@@ -403,19 +403,19 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
 
           {/* AI Recommendations */}
           {combinedProfile.recommendations && (
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
+            <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+              <p className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                <Sparkles className="h-2.5 w-2.5" />
                 Rekomendasi AI
               </p>
-              <p className="text-sm whitespace-pre-line leading-relaxed text-foreground/90">
+              <p className="text-xs whitespace-pre-line leading-relaxed text-foreground/90">
                 {combinedProfile.recommendations}
               </p>
             </div>
           )}
           
           {/* Actions */}
-          <div className="flex items-center justify-between text-sm pt-2">
+          <div className="flex items-center justify-between text-[10px] pt-1">
             <span className="text-muted-foreground">
               Update: {new Date(combinedProfile.lastUpdated).toLocaleDateString('id-ID')}
             </span>
@@ -423,10 +423,10 @@ const SkinProfileCard = ({ onQuizComplete }: SkinProfileCardProps) => {
               variant="ghost" 
               size="sm"
               onClick={() => setShowQuiz(true)}
-              className="text-primary hover:text-primary/80"
+              className="text-primary hover:text-primary/80 h-6 text-[10px] px-2"
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              Update Kuesioner
+              <RefreshCw className="h-3 w-3 mr-1" />
+              Update
             </Button>
           </div>
         </CardContent>
