@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from './ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sparkles, User, LogOut, Camera, MessageSquare, Home, ShoppingBag, Calendar, TrendingUp, Settings, Menu, X, ShieldAlert } from 'lucide-react';
+import { Sparkles, User, LogOut, Camera, MessageSquare, Home, ShoppingBag, Calendar, TrendingUp, Settings, Menu, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet';
 import { NotificationBell } from '@/components/NotificationBell';
@@ -14,191 +14,86 @@ export const Navigation = () => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
-      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-bold text-lg md:text-xl">
-          <Sparkles className="h-5 w-5 md:h-6 md:w-6 text-primary" />
-          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            SkinMatch AI
-          </span>
+    <nav className="fixed top-0 left-0 right-0 z-50 glass-strong border-b border-border/50">
+      <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
+          </div>
+          <span className="font-bold text-sm gradient-text hidden sm:block">SkinMatch</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-2">
+        <div className="hidden lg:flex items-center gap-1">
           {user ? (
             <>
-              <Link to="/dashboard">
-                <Button 
-                  variant={isActive('/dashboard') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <Home className="h-4 w-4" />
-                  <span className="hidden xl:inline">Dashboard</span>
-                </Button>
-              </Link>
-              <Link to="/scan">
-                <Button 
-                  variant={isActive('/scan') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <Camera className="h-4 w-4" />
-                  <span className="hidden xl:inline">Scan</span>
-                </Button>
-              </Link>
-              <Link to="/product-scan">
-                <Button 
-                  variant={isActive('/product-scan') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <ShieldAlert className="h-4 w-4" />
-                  <span className="hidden xl:inline">Product</span>
-                </Button>
-              </Link>
-              <Link to="/shop">
-                <Button 
-                  variant={isActive('/shop') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                  <span className="hidden xl:inline">Shop</span>
-                </Button>
-              </Link>
-              <Link to="/routine">
-                <Button 
-                  variant={isActive('/routine') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <Calendar className="h-4 w-4" />
-                  <span className="hidden xl:inline">Routine</span>
-                </Button>
-              </Link>
-              <Link to="/progress">
-                <Button 
-                  variant={isActive('/progress') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <TrendingUp className="h-4 w-4" />
-                  <span className="hidden xl:inline">Progress</span>
-                </Button>
-              </Link>
-              <Link to="/chat">
-                <Button 
-                  variant={isActive('/chat') ? 'default' : 'ghost'} 
-                  size="sm"
-                  className="gap-1"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                  <span className="hidden xl:inline">Chat</span>
-                </Button>
-              </Link>
+              <NavLink to="/dashboard" isActive={isActive('/dashboard')} icon={Home} label="Home" />
+              <NavLink to="/scan" isActive={isActive('/scan')} icon={Camera} label="Scan" />
+              <NavLink to="/product-scan" isActive={isActive('/product-scan')} icon={ShieldAlert} label="Product" />
+              <NavLink to="/shop" isActive={isActive('/shop')} icon={ShoppingBag} label="Shop" />
+              <NavLink to="/routine" isActive={isActive('/routine')} icon={Calendar} label="Routine" />
+              <NavLink to="/progress" isActive={isActive('/progress')} icon={TrendingUp} label="Progress" />
+              <NavLink to="/chat" isActive={isActive('/chat')} icon={MessageSquare} label="Chat" />
+              <div className="w-px h-6 bg-border mx-2" />
               <Link to="/settings">
-                <Button 
-                  variant={isActive('/settings') ? 'default' : 'ghost'} 
-                  size="icon"
-                >
+                <Button variant={isActive('/settings') ? 'secondary' : 'ghost'} size="icon-sm">
                   <Settings className="h-4 w-4" />
                 </Button>
               </Link>
               <NotificationBell />
               <Link to="/profile">
-                <Button 
-                  variant={isActive('/profile') ? 'default' : 'ghost'} 
-                  size="icon"
-                >
+                <Button variant={isActive('/profile') ? 'secondary' : 'ghost'} size="icon-sm">
                   <User className="h-4 w-4" />
                 </Button>
               </Link>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => signOut()}
-              >
+              <Button variant="ghost" size="icon-sm" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </>
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost">Sign In</Button>
+                <Button variant="ghost" size="sm">Masuk</Button>
               </Link>
               <Link to="/register">
-                <Button>Get Started</Button>
+                <Button size="sm">Daftar</Button>
               </Link>
             </>
           )}
         </div>
 
-        {/* Mobile Navigation - Simplified since we have bottom nav */}
-        <div className="lg:hidden flex items-center gap-2">
+        {/* Mobile Navigation */}
+        <div className="lg:hidden flex items-center gap-1">
           {user ? (
             <>
               <NotificationBell />
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-10 w-10">
+                  <Button variant="ghost" size="icon-sm">
                     <Menu className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="right" className="w-72">
+                <SheetContent side="right" className="w-72 glass-strong">
                   <SheetHeader>
-                    <SheetTitle>Menu Lainnya</SheetTitle>
+                    <SheetTitle className="text-left">Menu</SheetTitle>
                   </SheetHeader>
-                  <div className="flex flex-col gap-2 mt-6">
-                    <Link to="/product-scan" onClick={() => setMobileMenuOpen(false)}>
-                      <Button 
-                        variant={isActive('/product-scan') ? 'default' : 'ghost'} 
-                        className="w-full justify-start gap-3 h-12"
-                      >
-                        <ShieldAlert className="h-5 w-5" />
-                        Product Scan
-                      </Button>
-                    </Link>
-                    <Link to="/routine" onClick={() => setMobileMenuOpen(false)}>
-                      <Button 
-                        variant={isActive('/routine') ? 'default' : 'ghost'} 
-                        className="w-full justify-start gap-3 h-12"
-                      >
-                        <Calendar className="h-5 w-5" />
-                        Routine
-                      </Button>
-                    </Link>
-                    <Link to="/progress" onClick={() => setMobileMenuOpen(false)}>
-                      <Button 
-                        variant={isActive('/progress') ? 'default' : 'ghost'} 
-                        className="w-full justify-start gap-3 h-12"
-                      >
-                        <TrendingUp className="h-5 w-5" />
-                        Progress
-                      </Button>
-                    </Link>
-                    <Link to="/settings" onClick={() => setMobileMenuOpen(false)}>
-                      <Button 
-                        variant={isActive('/settings') ? 'default' : 'ghost'} 
-                        className="w-full justify-start gap-3 h-12"
-                      >
-                        <Settings className="h-5 w-5" />
-                        Settings
-                      </Button>
-                    </Link>
-                    <div className="border-t pt-4 mt-4">
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start gap-3 h-12 text-destructive"
-                        onClick={() => {
-                          signOut();
-                          setMobileMenuOpen(false);
-                        }}
-                      >
-                        <LogOut className="h-5 w-5" />
-                        Sign Out
-                      </Button>
-                    </div>
+                  <div className="flex flex-col gap-1 mt-6">
+                    <MobileNavLink to="/product-scan" icon={ShieldAlert} label="Product Scan" onClick={() => setMobileMenuOpen(false)} isActive={isActive('/product-scan')} />
+                    <MobileNavLink to="/routine" icon={Calendar} label="Routine" onClick={() => setMobileMenuOpen(false)} isActive={isActive('/routine')} />
+                    <MobileNavLink to="/progress" icon={TrendingUp} label="Progress" onClick={() => setMobileMenuOpen(false)} isActive={isActive('/progress')} />
+                    <MobileNavLink to="/settings" icon={Settings} label="Settings" onClick={() => setMobileMenuOpen(false)} isActive={isActive('/settings')} />
+                    <div className="border-t border-border my-4" />
+                    <Button 
+                      variant="ghost" 
+                      className="w-full justify-start gap-3 h-11 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => {
+                        signOut();
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      <LogOut className="h-5 w-5" />
+                      Keluar
+                    </Button>
                   </div>
                 </SheetContent>
               </Sheet>
@@ -206,10 +101,10 @@ export const Navigation = () => {
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost" size="sm">Sign In</Button>
+                <Button variant="ghost" size="sm">Masuk</Button>
               </Link>
               <Link to="/register">
-                <Button size="sm">Start</Button>
+                <Button size="sm">Daftar</Button>
               </Link>
             </>
           )}
@@ -218,3 +113,35 @@ export const Navigation = () => {
     </nav>
   );
 };
+
+interface NavLinkProps {
+  to: string;
+  isActive: boolean;
+  icon: React.ElementType;
+  label: string;
+}
+
+const NavLink = ({ to, isActive, icon: Icon, label }: NavLinkProps) => (
+  <Link to={to}>
+    <Button variant={isActive ? 'secondary' : 'ghost'} size="sm" className="gap-1.5">
+      <Icon className="h-4 w-4" />
+      <span className="hidden xl:inline">{label}</span>
+    </Button>
+  </Link>
+);
+
+interface MobileNavLinkProps extends NavLinkProps {
+  onClick: () => void;
+}
+
+const MobileNavLink = ({ to, icon: Icon, label, onClick, isActive }: MobileNavLinkProps) => (
+  <Link to={to} onClick={onClick}>
+    <Button 
+      variant={isActive ? 'secondary' : 'ghost'} 
+      className="w-full justify-start gap-3 h-11"
+    >
+      <Icon className="h-5 w-5" />
+      {label}
+    </Button>
+  </Link>
+);
