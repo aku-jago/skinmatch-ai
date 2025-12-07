@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sparkles, ScanFace, MessageSquare, TrendingUp, Shield, ArrowRight } from 'lucide-react';
+import { Sparkles, ScanFace, MessageSquare, TrendingUp, Shield, ArrowRight, Star, Users, Zap } from 'lucide-react';
 import heroImage from '@/assets/hero-skincare.jpg';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-hidden">
-      {/* Ambient background effects */}
+      {/* Subtle background pattern */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-accent/10 rounded-full blur-[100px]" />
+        <div className="absolute top-20 right-10 w-72 h-72 bg-primary/8 rounded-full blur-3xl" />
+        <div className="absolute bottom-40 left-10 w-64 h-64 bg-accent/8 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
@@ -27,31 +27,86 @@ const Index = () => {
         </Link>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative z-10 px-4 pt-8 pb-12">
-        <div className="max-w-lg mx-auto space-y-8">
+      {/* Hero Section - New Design */}
+      <section className="relative z-10 px-4 pt-6 pb-10">
+        <div className="max-w-lg mx-auto space-y-6">
           {/* Badge */}
           <div className="flex justify-center animate-fade-up">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-xs font-medium">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse-soft" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-xs font-medium text-primary">
+              <Zap className="h-3.5 w-3.5" />
               AI-Powered Skincare
             </div>
           </div>
 
           {/* Main heading */}
-          <div className="text-center space-y-4 animate-fade-up" style={{ animationDelay: '100ms' }}>
+          <div className="text-center space-y-3 animate-fade-up" style={{ animationDelay: '100ms' }}>
             <h1 className="text-4xl md:text-5xl font-bold leading-[1.1] tracking-tight">
               Your Personal
               <br />
               <span className="gradient-text">Skin Expert</span>
             </h1>
-            <p className="text-muted-foreground text-base md:text-lg max-w-sm mx-auto">
-              Analisis kulit, rekomendasi produk, dan konsultasi AI — semua dalam satu aplikasi
+            <p className="text-muted-foreground text-base max-w-xs mx-auto">
+              Analisis kulit, rekomendasi produk, dan konsultasi AI dalam satu aplikasi
             </p>
           </div>
 
+          {/* Hero Image with Creative Frame */}
+          <div className="relative animate-fade-up" style={{ animationDelay: '200ms' }}>
+            {/* Main Image Container */}
+            <div className="relative mx-auto w-48 h-48 md:w-56 md:h-56">
+              {/* Decorative ring */}
+              <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30 animate-[spin_20s_linear_infinite]" />
+              
+              {/* Image */}
+              <div className="absolute inset-3 rounded-full overflow-hidden border-4 border-background shadow-medium">
+                <img 
+                  src={heroImage} 
+                  alt="Healthy glowing skin" 
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              {/* Floating badges */}
+              <div className="absolute -top-2 -right-2 glass rounded-xl px-3 py-2 shadow-soft animate-float">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-6 w-6 rounded-lg bg-primary/15 flex items-center justify-center">
+                    <ScanFace className="h-3.5 w-3.5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">10K+</p>
+                    <p className="text-[10px] text-muted-foreground">Scans</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute -bottom-1 -left-4 glass rounded-xl px-3 py-2 shadow-soft animate-float" style={{ animationDelay: '1s' }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-6 w-6 rounded-lg bg-warning/15 flex items-center justify-center">
+                    <Star className="h-3.5 w-3.5 text-warning fill-warning" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">4.9</p>
+                    <p className="text-[10px] text-muted-foreground">Rating</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="absolute top-1/2 -right-8 glass rounded-xl px-3 py-2 shadow-soft animate-float" style={{ animationDelay: '0.5s' }}>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-6 w-6 rounded-lg bg-success/15 flex items-center justify-center">
+                    <Users className="h-3.5 w-3.5 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold">5K+</p>
+                    <p className="text-[10px] text-muted-foreground">Users</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* CTA Buttons */}
-          <div className="flex flex-col gap-3 animate-fade-up" style={{ animationDelay: '200ms' }}>
+          <div className="flex flex-col gap-3 pt-4 animate-fade-up" style={{ animationDelay: '300ms' }}>
             <Link to="/register" className="w-full">
               <Button variant="hero" size="xl" className="w-full group">
                 Mulai Gratis
@@ -63,33 +118,6 @@ const Index = () => {
                 Sudah punya akun? Masuk
               </Button>
             </Link>
-          </div>
-
-          {/* Hero Image */}
-          <div className="relative animate-fade-up" style={{ animationDelay: '300ms' }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30 rounded-3xl blur-2xl scale-95" />
-            <div className="relative rounded-3xl overflow-hidden border border-border/50 shadow-medium">
-              <img 
-                src={heroImage} 
-                alt="Healthy glowing skin" 
-                className="w-full aspect-[4/3] object-cover"
-              />
-              {/* Overlay gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-              
-              {/* Floating stats */}
-              <div className="absolute bottom-4 left-4 right-4">
-                <div className="glass rounded-2xl p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <ScanFace className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold">10.000+</p>
-                    <p className="text-xs text-muted-foreground">Analisis kulit dilakukan</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>
