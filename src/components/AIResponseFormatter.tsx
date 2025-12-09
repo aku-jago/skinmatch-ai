@@ -95,8 +95,8 @@ export const AIResponseFormatter: React.FC<AIResponseFormatterProps> = ({
         return;
       }
 
-      // Bullet points
-      if (trimmed.startsWith('•') || trimmed.startsWith('-') || trimmed.startsWith('*')) {
+      // Bullet points (*, -, •) - but not ** which is bold
+      if ((trimmed.startsWith('•') || trimmed.startsWith('-') || (trimmed.startsWith('*') && !trimmed.startsWith('**')))) {
         if (listType !== 'bullet') {
           flushList();
           listType = 'bullet';
@@ -120,11 +120,16 @@ export const AIResponseFormatter: React.FC<AIResponseFormatterProps> = ({
   };
 
   const formatInlineText = (text: string): React.ReactNode => {
-    // Handle bold text **text**
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
+    // Handle bold text **text** with various patterns
+    // Match **text** or **text:** patterns
+    const parts = text.split(/(\*\*[^*]+\*\*:?)/g);
+    
     return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-medium text-foreground">{part.slice(2, -2)}</strong>;
+      // Match **text** or **text**:
+      if (part.match(/^\*\*[^*]+\*\*:?$/)) {
+        const cleanText = part.replace(/^\*\*/, '').replace(/\*\*:?$/, '');
+        const hasColon = part.endsWith(':');
+        return <strong key={i} className="font-medium text-foreground">{cleanText}{hasColon ? ':' : ''}</strong>;
       }
       return part;
     });
