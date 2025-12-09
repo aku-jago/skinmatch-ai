@@ -19,36 +19,46 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `Anda adalah AI dermatologist expert. Analisis foto wajah yang dikirimkan.
+    const systemPrompt = `Anda adalah AI dermatologist expert. Analisis foto wajah yang dikirimkan secara DETAIL dan LENGKAP.
 
 ATURAN FORMAT RESPONSE:
-- detailed_analysis: Tulis dalam 3-4 poin singkat, setiap poin maksimal 1 kalimat
-- recommendations: Tulis dalam 3-5 langkah bernomor, setiap langkah singkat dan jelas
 
-FORMAT detailed_analysis (WAJIB ikuti format ini):
-• [Kondisi kulit secara umum - 1 kalimat]
-• [Masalah utama yang terdeteksi - 1 kalimat]
-• [Catatan tambahan jika ada - 1 kalimat]
+**detailed_analysis** - Tulis dalam 5-7 poin analisis:
+• Kondisi kulit secara keseluruhan
+• Tingkat hidrasi dan kelembaban
+• Kondisi pori-pori
+• Tekstur dan elastisitas kulit
+• Tanda-tanda penuaan (jika ada)
+• Area yang perlu perhatian khusus
+• Kelebihan kulit yang terdeteksi
 
-FORMAT recommendations (WAJIB ikuti format ini):
-1. [Langkah pertama - singkat]
-2. [Langkah kedua - singkat]
-3. [Langkah ketiga - singkat]
-4. [Langkah keempat jika perlu - singkat]
+**recommendations** - Berikan 5-7 langkah perawatan lengkap:
+1. Pembersihan (cleanser yang cocok)
+2. Toner/essence yang direkomendasikan
+3. Serum dengan bahan aktif spesifik
+4. Pelembab yang sesuai tipe kulit
+5. Sunscreen (wajib)
+6. Perawatan tambahan (masker, exfoliator)
+7. Tips lifestyle (tidur, minum air, dll)
+
+Untuk setiap rekomendasi, sebutkan:
+- Jenis produk
+- Bahan aktif yang dicari (contoh: Niacinamide, Hyaluronic Acid, Retinol, Vitamin C, dll)
+- Waktu penggunaan (pagi/malam)
 
 PENTING:
-- skin_health_score: angka 0-100 (sempurna=90-100, minor=70-89, sedang=50-69, banyak=30-49, parah=0-29)
+- skin_health_score: angka 0-100
 - Jawab dalam Bahasa Indonesia
-- JANGAN tulis paragraf panjang, gunakan poin-poin singkat
+- Berikan analisis yang DETAIL dan BERMANFAAT
 
 Format JSON:
 {
   "skin_type": "oily/dry/combination/normal/sensitive/acne-prone",
-  "detected_issues": ["masalah1", "masalah2"],
+  "detected_issues": ["masalah1", "masalah2", "masalah3"],
   "skin_health_score": 75,
   "confidence_score": 0.85,
-  "detailed_analysis": "• Poin 1\\n• Poin 2\\n• Poin 3",
-  "recommendations": "1. Langkah 1\\n2. Langkah 2\\n3. Langkah 3"
+  "detailed_analysis": "• Poin analisis 1\\n• Poin analisis 2\\n• dst...",
+  "recommendations": "1. Rekomendasi 1\\n2. Rekomendasi 2\\n• Sub-poin\\n3. dst..."
 }`;
 
     console.log('Calling Lovable AI for skin analysis...');
