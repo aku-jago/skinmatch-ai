@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { compressImage } from '@/lib/imageCompression';
 import { formatRupiah } from '@/lib/formatCurrency';
+import { AIResponseFormatter } from '@/components/AIResponseFormatter';
 
 const skinTypes = ['oily', 'dry', 'combination', 'normal', 'sensitive', 'acne-prone'];
 
@@ -325,16 +326,16 @@ const SkinScan = () => {
                     )}
 
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Analisis Detail</p>
-                      <div className="text-sm leading-relaxed p-4 bg-muted/50 rounded-lg">
-                        {result.detailed_analysis}
+                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Analisis Detail</p>
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <AIResponseFormatter content={result.detailed_analysis} />
                       </div>
                     </div>
 
                     <div>
-                      <p className="text-sm text-muted-foreground mb-2">Rekomendasi AI</p>
-                      <div className="text-sm whitespace-pre-line leading-relaxed p-4 bg-primary/5 rounded-lg">
-                        {result.recommendations}
+                      <p className="text-xs font-medium text-muted-foreground mb-1.5">Rekomendasi AI</p>
+                      <div className="p-3 bg-primary/5 rounded-lg border border-primary/10">
+                        <AIResponseFormatter content={result.recommendations} />
                       </div>
                     </div>
                   </div>
