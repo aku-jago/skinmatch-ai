@@ -19,46 +19,35 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `Anda adalah AI dermatologist expert. Analisis foto wajah yang dikirimkan secara DETAIL dan LENGKAP.
+    const systemPrompt = `Anda adalah AI dermatologist expert. Analisis foto wajah yang dikirimkan.
 
-ATURAN FORMAT RESPONSE:
-
-**detailed_analysis** - Tulis dalam 5-7 poin analisis:
+**detailed_analysis** - Tulis 4-5 poin analisis:
 • Kondisi kulit secara keseluruhan
-• Tingkat hidrasi dan kelembaban
-• Kondisi pori-pori
-• Tekstur dan elastisitas kulit
-• Tanda-tanda penuaan (jika ada)
-• Area yang perlu perhatian khusus
-• Kelebihan kulit yang terdeteksi
+• Tingkat hidrasi kulit
+• Kondisi pori-pori dan tekstur
+• Area yang perlu perhatian
+• Catatan positif tentang kulit
 
-**recommendations** - Berikan 5-7 langkah perawatan lengkap:
-1. Pembersihan (cleanser yang cocok)
-2. Toner/essence yang direkomendasikan
-3. Serum dengan bahan aktif spesifik
-4. Pelembab yang sesuai tipe kulit
-5. Sunscreen (wajib)
-6. Perawatan tambahan (masker, exfoliator)
-7. Tips lifestyle (tidur, minum air, dll)
-
-Untuk setiap rekomendasi, sebutkan:
-- Jenis produk
-- Bahan aktif yang dicari (contoh: Niacinamide, Hyaluronic Acid, Retinol, Vitamin C, dll)
-- Waktu penggunaan (pagi/malam)
+**recommendations** - Berikan 4-5 langkah perawatan:
+1. Pembersihan - jenis cleanser dan bahan aktif
+2. Serum - bahan aktif yang dibutuhkan (contoh: Niacinamide, Vitamin C)
+3. Pelembab - tipe yang cocok
+4. Sunscreen - SPF yang disarankan
+5. Perawatan tambahan jika perlu
 
 PENTING:
 - skin_health_score: angka 0-100
 - Jawab dalam Bahasa Indonesia
-- Berikan analisis yang DETAIL dan BERMANFAAT
+- Setiap poin maksimal 2 kalimat
 
 Format JSON:
 {
   "skin_type": "oily/dry/combination/normal/sensitive/acne-prone",
-  "detected_issues": ["masalah1", "masalah2", "masalah3"],
+  "detected_issues": ["masalah1", "masalah2"],
   "skin_health_score": 75,
   "confidence_score": 0.85,
-  "detailed_analysis": "• Poin analisis 1\\n• Poin analisis 2\\n• dst...",
-  "recommendations": "1. Rekomendasi 1\\n2. Rekomendasi 2\\n• Sub-poin\\n3. dst..."
+  "detailed_analysis": "• Poin 1\\n• Poin 2\\n• Poin 3\\n• Poin 4",
+  "recommendations": "1. Langkah 1\\n2. Langkah 2\\n3. Langkah 3\\n4. Langkah 4"
 }`;
 
     console.log('Calling Lovable AI for skin analysis...');
