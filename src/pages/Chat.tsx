@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Send, Bot, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { AIResponseFormatter } from '@/components/AIResponseFormatter';
 
 interface Message {
   id: string;
@@ -208,20 +209,11 @@ const Chat = () => {
                           : 'bg-muted/60 text-foreground rounded-bl-md'
                       }`}
                     >
-                      <div className="text-[11px] lg:text-xs leading-relaxed whitespace-pre-wrap">
-                        {message.content.split('\n').map((line, idx) => {
-                          if (line.trim().startsWith('•') || line.trim().match(/^\d+\./)) {
-                            return <div key={idx} className="my-0.5 pl-1">{line}</div>;
-                          }
-                          if (line.trim().startsWith('#')) {
-                            return <div key={idx} className="font-medium mt-1.5 mb-0.5">{line.replace(/^#+\s*/, '')}</div>;
-                          }
-                          if (line.trim() === '') {
-                            return <div key={idx} className="h-1" />;
-                          }
-                          return <span key={idx}>{line}</span>;
-                        })}
-                      </div>
+                      {message.role === 'assistant' ? (
+                        <AIResponseFormatter content={message.content} variant="compact" />
+                      ) : (
+                        <p className="text-[11px] lg:text-xs leading-relaxed">{message.content}</p>
+                      )}
                     </div>
                   </div>
                 ))}
